@@ -40,8 +40,8 @@ namespace ui
         void draw_component_layer(Scene *scene);
 
         void draw_hierarchy_layer(Scene *scene);
-        void draw_timeline(Scene *scene);
-
+		void init_timeline(Scene *scene);
+		void draw_timeline(Scene *scene);
         bool is_scene_layer_hovered(const std::string &title);
 
         const UiContext &get_context() const;

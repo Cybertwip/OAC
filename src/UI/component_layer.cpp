@@ -82,6 +82,11 @@ namespace ui
                     {
                         animation_idx = idx;
                     }
+					
+					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+					{
+						context.is_add_animation_track = true;
+					}
                 }
             }
 
@@ -138,6 +143,8 @@ namespace ui
         for (auto &mat : material)
         {
             ImGui::ColorPicker3(("diffuse " + std::to_string(idx)).c_str(), &mat->diffuse[0]);
+			
+			idx++;
         }
     }
 }

@@ -57,7 +57,7 @@ namespace ImSequencer
       int cx = (int)(io.MousePos.x);
       int cy = (int)(io.MousePos.y);
       static float framePixelWidth = 10.f;
-      static float framePixelWidthTarget = 10.f;
+      static float framePixelWidthTarget = 1.f;
       int legendWidth = 200;
 
       static int movingEntry = -1;
@@ -77,7 +77,6 @@ namespace ImSequencer
       ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
       ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
       int firstFrameUsed = firstFrame ? *firstFrame : 0;
-
 
       int controlHeight = sequenceCount * ItemHeight;
       for (int i = 0; i < sequenceCount; i++)

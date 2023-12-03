@@ -3,19 +3,13 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 message("Using CMake version ${CMAKE_VERSION}")
 
-# for CCACHE
-if(APPLE)
-  find_program(CCACHE_PROGRAM ccache)
-  if(CCACHE_PROGRAM)
-      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
-  endif()
-endif()
-
 project(
-  Anim
+  OAC
   LANGUAGES CXX
   VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_WARN_DEPRECATED FALSE)
 
 # for ninja(unix)
 if (UNIX AND NOT APPLE)

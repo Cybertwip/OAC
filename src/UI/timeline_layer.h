@@ -27,6 +27,7 @@ namespace ui
     public:
         TimelineLayer();
         ~TimelineLayer() = default;
+		void init(Scene *scene);
         void draw(Scene *scene, UiContext &context);
 
     private:

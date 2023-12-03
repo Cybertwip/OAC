@@ -86,6 +86,7 @@ set(test_src
     resources/shared_resources.h
 
     animation/animator.cpp
+    animation/sequence_animator.cpp
     animation/animation.cpp
     animation/json_animation.cpp
     animation/assimp_animation.cpp
@@ -93,6 +94,7 @@ set(test_src
     animation/retargeter.cpp
 
     animation/animator.h
+    animation/sequence_animator.h
     animation/animation.h
     animation/assimp_animation.h
     animation/json_animation.h
@@ -120,7 +122,7 @@ target_include_directories(test PUBLIC ./
 
 message("==========================================================")
 
-add_executable(Anim 
+add_executable(OAC 
 ./main.cpp 
  
 ./UI/hierarchy_layer.cpp
@@ -143,17 +145,17 @@ event/event_history.cpp
 )
 
 if(MSVC)
-  target_compile_options(Anim PUBLIC   "/utf-8")#  target_link_options(Anim PUBLIC "/INCREMENTAL")
+  target_compile_options(OAC PUBLIC   "/utf-8")#  target_link_options(OAC PUBLIC "/INCREMENTAL")
   if (CMAKE_BUILD_TYPE  MATCHES Release)
-      target_link_options(Anim PUBLIC "/INCREMENTAL" "/SUBSYSTEM:windows" "/ENTRY:mainCRTStartup")
+      target_link_options(OAC PUBLIC "/INCREMENTAL" "/SUBSYSTEM:windows" "/ENTRY:mainCRTStartup")
   endif()
-  target_link_libraries(Anim  glcpp test py)
+  target_link_libraries(OAC  glcpp test py)
 elseif(WIN32)
-    target_compile_options(Anim  PRIVATE -Wall -Werror -std=c++17 -static)
-    target_link_libraries(Anim  glcpp)
-    target_include_directories(Anim  PUBLIC ./)
+    target_compile_options(OAC  PRIVATE -Wall -Werror -std=c++17 -static)
+    target_link_libraries(OAC  glcpp)
+    target_include_directories(OAC  PUBLIC ./)
 else()
-    target_link_libraries(Anim  glcpp test py)
+    target_link_libraries(OAC  glcpp test py)
 endif()
 
 message("==========================================================")

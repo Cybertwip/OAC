@@ -23,7 +23,8 @@ namespace anim
         ~SharedResources();
         Animator *get_mutable_animator();
         std::shared_ptr<Shader> get_mutable_shader(const std::string &name);
-        void import(const char *path, float scale = 100.0f);
+        void import_model(const char *path, float scale = 100.0f);
+		void import_animation(const char *path, float scale = 100.0f);
         void export_animation(Entity *entity, const char *path, bool is_linear);
         void add_entity(std::shared_ptr<Model> &model, const char *path);
         void add_animations(const std::vector<std::shared_ptr<Animation>> &animations);

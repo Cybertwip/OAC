@@ -6,42 +6,86 @@
 
 namespace anim
 {
-    class Animation;
+class Animation;
 
-    class AnimationComponent : public ComponentBase<AnimationComponent>
-    {
-    public:
-        void init_animation();
-        void play();
-        void stop();
-        void reload();
-        void set_animation(Animation *animation);
-        void set_current_frame_num_to_time(uint32_t frame);
-        void set_custom_tick_per_second(float tick_per_second);
-        void set_fps(float fps);
-        const Animation *get_animation() const;
-        Animation *get_mutable_animation();
-        float get_origin_current_time(float time);
-        bool *get_mutable_pointer_is_loop();
-        bool &get_mutable_is_loop();
-        bool &get_mutable_is_stop();
-        const uint32_t get_current_frame_num() const;
-        const uint32_t get_custom_duration() const;
-        float &get_mutable_custom_tick_per_second();
-        float get_ticks_per_second_factor() const;
-        float &get_mutable_current_time();
-        float &get_mutable_fps();
-        float get_fps() const;
-        float get_tps() const;
+class StackedAnimation {
+public:
+	StackedAnimation(std::shared_ptr<Animation> animation, int startTime, int endTime);
+	
+	std::shared_ptr<Animation> get_wrapped_animation(){
+		return _animation;
+	}
+	
+	int get_start_time(){
+		return _startTime;
+	}
+	
+	int get_end_time() {
+		return _endTime;
+	}
+	
+	int get_duration() {
+		return _duration;
+	}
+	
+private:
+	std::shared_ptr<Animation> _animation;
+	
+	int _startTime;
+	int _endTime;
+	int _duration;
+};
 
-    private:
-        Animation *animation_{nullptr};
-        float current_time_ = 0.0f;
-        float fps_ = 24.0f;
-        float custom_ticks_per_second_ = 24.0f;
-        bool is_stop_ = false;
-        bool is_loop_ = true;
-    };
+class AnimationComponent : public ComponentBase<AnimationComponent>
+{
+public:
+	void init_animation();
+	void play();
+	void stop();
+	void reload();
+	void set_animation(Animation *animation);
+	void set_current_frame_num_to_time(uint32_t frame);
+	void set_custom_tick_per_second(float tick_per_second);
+	void set_fps(float fps);
+	const Animation *get_animation() const;
+	Animation *get_mutable_animation();
+	float get_origin_current_time(float time);
+	bool *get_mutable_pointer_is_loop();
+	bool &get_mutable_is_loop();
+	bool &get_mutable_is_stop();
+	const uint32_t get_current_frame_num() const;
+	const uint32_t get_custom_duration() const;
+	float &get_mutable_custom_tick_per_second();
+	float get_ticks_per_second_factor() const;
+	float &get_mutable_current_time();
+	float &get_mutable_fps();
+	float get_fps() const;
+	float get_tps() const;
+	
+	std::vector<std::shared_ptr<StackedAnimation>>& get_animation_stack() { 
+		return _animationStack;
+	}
+	
+	void stack_animation(std::shared_ptr<StackedAnimation> stackedAnimation){
+		_animationStack.push_back(stackedAnimation);
+	}
+	
+	void clear_animation_stack(){
+		_animationStack.clear();
+	}
+
+	
+private:
+	Animation *animation_{nullptr};
+	float current_time_ = 0.0f;
+	float fps_ = 24.0f;
+	float custom_ticks_per_second_ = 24.0f;
+	bool is_stop_ = false;
+	bool is_loop_ = true;
+	
+	std::vector<std::shared_ptr<StackedAnimation>> _animationStack;
+};
 }
 
 #endif
+

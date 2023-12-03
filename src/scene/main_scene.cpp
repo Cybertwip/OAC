@@ -29,6 +29,7 @@ MainScene::MainScene(uint32_t width, uint32_t height, std::shared_ptr<anim::Shar
     {
         resources_ = std::move(resources);
     }
+	
     init_framebuffer(width, height);
     grid_framebuffer_.reset(new anim::Image{1, 1, GL_RGBA});
 

@@ -76,7 +76,8 @@ private:
     void process_component_context();
     void process_python_context();
 
-    void import_model_or_animation(const char *const path);
+	void import_model(const char *const path);
+	void import_animation(const char *const path);
     std::shared_ptr<anim::SharedResources> shared_resources_;
     std::unique_ptr<anim::EventHistoryQueue> history_;
 };

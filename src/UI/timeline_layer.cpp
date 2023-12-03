@@ -7,6 +7,8 @@
 #include <imgui/imgui_neo_sequencer.h>
 #include <imgui/icons/icons.h>
 #include <imgui/ImGuizmo.h>
+#include <imgui/ImSequencer.h>
+#include <imgui/ImCurveEdit.h>
 
 #include <entity/entity.h>
 #include <resources/shared_resources.h>
@@ -21,6 +23,121 @@
 
 #include <iostream>
 
+
+namespace {
+
+static const char* SequencerItemTypeNames[] = { "Animation" };
+
+
+struct TracksSequencer : public ImSequencer::SequenceInterface
+{
+	// interface with sequencer
+	
+	virtual int GetFrameMin() const {
+		return 0;
+//		return mFrameMin;
+	}
+	virtual int GetFrameMax() const {
+		return mFrameMax;
+	}
+	virtual int GetItemCount() const { return (int)mItems.size(); }
+	
+	virtual int GetItemTypeCount() const { return sizeof(SequencerItemTypeNames) / sizeof(char*); }
+	virtual const char* GetItemTypeName(int typeIndex) const { return SequencerItemTypeNames[typeIndex]; }
+	virtual const char* GetItemLabel(int index) const
+	{
+		static char tmps[512];
+		snprintf(tmps, 512, "[%02d] %s", index, mItems[index].mName.c_str());
+		return tmps;
+	}
+	
+	virtual void Get(int index, int** start, int** end, int* type, unsigned int* color)
+	{
+		SequenceItem& item = mItems[index];
+		if (color)
+			*color = 0xFFAA8080; // same color for everyone, return color based on type
+		
+		if(item.mFrameStart == item.mFrameEnd){
+			item.mFrameEnd = item.mFrameStart + 1;
+		}
+		
+		if (start)
+			*start = &item.mFrameStart;
+		if (end)
+			*end = &item.mFrameEnd;
+		if (type)
+			*type = item.mType;
+	}
+	virtual void Add(int type) { mItems.push_back(SequenceItem(-1, "", type, 0, 10 )); };
+	virtual void Del(int index) { mItems.erase(mItems.begin() + index); }
+	virtual void Duplicate(int index) { mItems.push_back(mItems[index]); }
+	
+	virtual size_t GetCustomHeight(int index) { return 0; }
+	
+	virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
+	{
+		draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
+		
+		int standardSize = mItems[index].mSequenceSize;
+		int extendedSize = mItems[index].mFrameEnd - mItems[index].mFrameStart;
+		if(extendedSize > standardSize){
+			int numberOfFits = static_cast<int>(extendedSize / standardSize);
+
+			
+			for(int fit = 0; fit < numberOfFits; ++fit){
+				
+				int repeatingFactor = fit + 1;
+				
+				float r = standardSize / float(mFrameMax);
+				
+				float x = ImLerp(rc.Min.x, rc.Max.x, r * repeatingFactor + r * mItems[index].mFrameStart / float(mItems[index].mFrameTotal));
+								
+				draw_list->AddLine(ImVec2(x, rc.Min.y + 6), ImVec2(x, rc.Max.y - 4), 0xAA000000, 4.f);
+			}
+
+		}
+		
+		draw_list->PopClipRect();
+	}
+	
+	TracksSequencer() : 
+//	mFrameMin(0),
+	mFrameMax(0) {
+		
+//		mFrameMin = 0;
+		mFrameMax = 1200;
+
+	}
+//	int mFrameMin;
+	int mFrameMax;
+	struct SequenceItem
+	{
+		SequenceItem(int id, const std::string& name, int type, int frameStart, int frameTotal){
+			mId = id;
+			mName = name;
+			mType = type;
+			mFrameStart = frameStart;
+			mFrameTotal = frameTotal;
+			
+			mFrameEnd = mFrameTotal;
+			mSequenceSize = mFrameTotal - mFrameStart;
+		}
+		
+		int mId;
+		std::string mName;
+		int mType;
+		int mFrameStart, mSequenceSize, mFrameTotal, mFrameEnd;
+	};
+	std::vector<SequenceItem> mItems;
+	
+};
+
+
+static TracksSequencer g_tracksSequencer;
+
+}
+
+
 using namespace anim;
 
 namespace ui
@@ -30,28 +147,196 @@ namespace ui
     {
         text_editor_.reset(new TextEditLayer());
         text_editor_->init();
-    }
+	}
+
+	void TimelineLayer::init(Scene *scene){
+		resources_ = scene->get_mutable_shared_resources().get();
+
+		const auto &animations = resources_->get_animations();
+		
+		if(!animations.empty()){
+			g_tracksSequencer.mItems.push_back(TracksSequencer::SequenceItem(animations[0]->get_id(), animations[0]->get_name(), 0, 0, animations[0]->get_duration()));
+		}
+	}
 
     void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
     {
         init_context(ui_context, scene);
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize;
+		
+		
+		
+		if(ui_context.component.is_add_animation_track){
+			ui_context.component.is_add_animation_track = false;
+			
+			const auto &animations = resources_->get_animations();
+
+			const auto& animation = animations[ui_context.component.current_animation_idx];
+			
+			bool existing = false;
+			for(auto& item : g_tracksSequencer.mItems){
+				if(item.mId == ui_context.component.current_animation_idx){
+					existing = true;
+					break;
+				}
+			}
+			
+			if(!existing){
+				g_tracksSequencer.mItems.push_back({ui_context.component.current_animation_idx, animation->get_name(), 0, 0, (int)animation->get_duration()});
+			}
+			
+		}
 
         if (is_hovered_zoom_slider_)
         {
             window_flags |= ImGuiWindowFlags_NoScrollWithMouse;
         }
 
-        ImGui::Begin(ICON_MD_SCHEDULE " Animation", 0, window_flags);
+
+        ImGui::Begin(ICON_MD_SCHEDULE " Playback", 0, window_flags);
         {
-            draw_animator_status(ui_context);
-            ImGui::BeginChild("##Timeline", ImVec2(0, 0), false, window_flags);
-            {
-                draw_sequencer(ui_context);
-            }
-            ImGui::EndChild();
-        }
+ 
+			ImGui::BeginTabBar("MyTabs", ImGuiTabBarFlags_None);
+			
+			auto anim_component = root_entity_->get_component<AnimationComponent>();
+			if (anim_component)
+			{
+				anim_component->clear_animation_stack();
+			}
+
+			// Tab: Tracks
+			if (ImGui::BeginTabItem(ICON_MD_TRACK_CHANGES " Tracks"))
+			{
+				const auto &animations = resources_->get_animations();
+				
+				for(auto& item : g_tracksSequencer.mItems){
+					const auto& animation = animations[item.mId];
+
+					if(animator_->get_current_time() >= item.mFrameStart && animator_->get_current_time() <= item.mFrameEnd){
+						anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, item.mFrameStart, item.mFrameEnd));
+
+					}
+					
+					auto& animationStack = anim_component->get_animation_stack();
+					
+					// Custom comparator function to sort based on start_time
+					auto comparator = [](const std::shared_ptr<StackedAnimation>& a, const std::shared_ptr<StackedAnimation>& b) {
+						return a->get_start_time() < b->get_start_time();
+					};
+					
+					// Sort animationStack using the custom comparator
+					std::sort(animationStack.begin(), animationStack.end(), comparator);
+
+
+				}
+				auto &context = ui_context.timeline;
+				ImGuiIO &io = ImGui::GetIO();
+				
+				ImVec2 button_size(40.0f, 0.0f);
+				ImVec2 small_button_size(32.0f, 0.0f);
+				const float item_spacing = ImGui::GetStyle().ItemSpacing.x;
+				float width = ImGui::GetContentRegionAvail().x;
+				
+				ImGui::PushItemWidth(30.0f);
+				DragFloatProperty(ICON_MD_SPEED, context.fps, 1.0f, 1.0f, 300.0f);
+				
+				ImGui::SameLine();
+				
+				auto current_cursor = ImGui::GetCursorPosX();
+				auto next_pos = ImGui::GetWindowWidth() / 2.0f - button_size.x - small_button_size.x - item_spacing / 2.0;
+				if (next_pos < current_cursor)
+				{
+					next_pos = current_cursor;
+				}
+				ImGui::SameLine(next_pos);
+				
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.0f);
+				ImGui::PushStyleColor(ImGuiCol_Text, {1.0f, 0.3f, 0.2f, 0.8f});
+				{
+					ImGui::PopStyleColor();
+					ImGui::PushStyleColor(ImGuiCol_Text, {1.0f, 1.0f, 1.0f, 1.0f});
+					ToggleButton(ICON_KI_CARET_LEFT, &context.is_backward, small_button_size, &context.is_clicked_play_back);
+					ImGui::SameLine();
+					ToggleButton(ICON_KI_CARET_RIGHT, &context.is_forward, small_button_size, &context.is_clicked_play);
+					ImGui::SameLine();
+					ToggleButton(ICON_KI_PAUSE, &context.is_stop, small_button_size);
+				}
+				ImGui::PopStyleColor();
+				ImGui::PopStyleVar();
+
+
+				// let's create the sequencer
+				static int selectedEntry = -1;
+				static int firstFrame = 0;
+				static bool expanded = true;
+				static int currentFrame = 0;
+				
+				currentFrame = static_cast<int>(animator_->get_current_time());
+				
+				animator_->set_end_time(g_tracksSequencer.mFrameMax);
+				
+				button_size = ImVec2(180.0f, 0.0f);
+
+				current_cursor = ImGui::GetCursorPosX();
+				next_pos = ImGui::GetWindowWidth() - button_size.x - small_button_size.x - item_spacing / 2.0;
+				if (next_pos < current_cursor)
+				{
+					next_pos = current_cursor;
+				}
+
+				ImGui::PushItemWidth(130);
+//				ImGui::InputInt("Frame Min", &g_tracksSequencer.mFrameMin);
+				ImGui::InputInt("Frame ", &currentFrame);
+				ImGui::SameLine(next_pos);
+				ImGui::InputInt("Frame Max", &g_tracksSequencer.mFrameMax);
+				ImGui::PopItemWidth();
+				Sequencer(&g_tracksSequencer, &currentFrame, &expanded, &selectedEntry, &firstFrame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+				// add a UI to edit that particular item
+				if (selectedEntry != -1)
+				{
+					const TracksSequencer::SequenceItem &item = g_tracksSequencer.mItems[selectedEntry];
+//					ImGui::Text("I am a %s, please edit me", SequencerItemTypeNames[item.mType]);
+					// switch (type) ....
+				}
+				
+				ImGui::EndTabItem();
+			}
+			
+			// Tab: Animation
+			if (ImGui::BeginTabItem(ICON_MD_SCHEDULE " Animation"))
+			{
+				const auto &animations = resources_->get_animations();
+
+				if (root_entity_ && root_entity_->get_component<AnimationComponent>())
+				{
+					if (anim_component && anim_component->get_animation())
+					{
+						const auto& animation = animations[anim_component->get_animation()->get_id()];
+						
+						anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, 0, anim_component->get_mutable_animation()->get_duration()));
+
+						animator_->set_end_time(static_cast<float>(anim_component->get_mutable_animation()->get_duration()));
+						
+						ui_context.timeline.end_frame = static_cast<int>(animator_->get_end_time());
+					}
+				}
+
+				draw_animator_status(ui_context);
+				ImGui::BeginChild("##Timeline", ImVec2(0, 0), false, window_flags);
+				{
+					draw_sequencer(ui_context);
+				}
+				ImGui::EndChild();
+				
+				ImGui::EndTabItem();
+			}
+			
+			
+			ImGui::EndTabBar();
+		}
         ImGui::End();
+		
+
     }
     inline void TimelineLayer::init_context(UiContext &ui_context, Scene *scene)
     {
@@ -67,7 +352,15 @@ namespace ui
         animator_ = resources_->get_mutable_animator();
         context.fps = animator_->get_fps();
         context.start_frame = static_cast<int>(animator_->get_start_time());
-        context.end_frame = static_cast<int>(animator_->get_end_time());
+		
+		if(ui_context.component.current_animation_idx != -1){
+			const auto &animations = resources_->get_animations();
+			
+			const auto& animation = animations[ui_context.component.current_animation_idx];
+			
+			context.end_frame = static_cast<int>(animation->get_duration());
+		}
+		
         context.current_frame = static_cast<int>(animator_->get_current_time());
         context.is_recording = is_recording_;
         if (!context.is_stop)

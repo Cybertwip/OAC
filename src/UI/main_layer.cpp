@@ -204,13 +204,15 @@ namespace ui
     // }
     void MainLayer::draw_menu_bar(float fps)
     {
-        const char *menu_dialog_name[4] = {
-            "Import",
+        const char *menu_dialog_name[5] = {
+			"Import Model",
+			"Import Animation",
             "ImportDir",
             "Export",
             "ExportData"};
-        std::array<bool *, 4> is_clicked_dir = {
-            &context_.menu.is_clicked_import_model,
+        std::array<bool *, 5> is_clicked_dir = {
+			&context_.menu.is_clicked_import_model,
+			&context_.menu.is_clicked_import_animation,
             &context_.menu.is_clicked_import_dir,
             &context_.menu.is_clicked_export_animation,
             &context_.menu.is_clicked_export_all_data};
@@ -222,7 +224,7 @@ namespace ui
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("Import: model, animation", NULL, nullptr))
+                if (ImGui::MenuItem("Import: model", NULL, nullptr))
                 {
                     ImGuiFileDialog::Instance()->OpenDialog(menu_dialog_name[0],
                                                             ICON_MD_FILE_OPEN " Open fbx, gltf ...",
@@ -232,9 +234,19 @@ namespace ui
                                                             // IGFD::UserDatas(&ImportScale),
                                                             ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_DisableCreateDirectoryButton);
                 }
+				if (ImGui::MenuItem("Import: animation", NULL, nullptr))
+				{
+					ImGuiFileDialog::Instance()->OpenDialog(menu_dialog_name[1],
+															ICON_MD_FILE_OPEN " Open fbx, gltf ...",
+															filters,
+															".", 1, nullptr,
+															// std::bind(&ScaleInfosPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 150, 1,
+															// IGFD::UserDatas(&ImportScale),
+															ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_DisableCreateDirectoryButton);
+				}
                 if (ImGui::MenuItem("Import: Folder", NULL, nullptr))
                 {
-                    ImGuiFileDialog::Instance()->OpenDialog(menu_dialog_name[1], "Choose a Directory",
+                    ImGuiFileDialog::Instance()->OpenDialog(menu_dialog_name[2], "Choose a Directory",
                                                             nullptr,
                                                             ".", 1, nullptr,
                                                             // std::bind(&ScaleInfosPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 150, 1,
@@ -244,7 +256,7 @@ namespace ui
                 ImGui::Separator();
                 if (ImGui::MenuItem("Export: animation(selected model)", NULL, nullptr))
                 {
-                    ImGuiFileDialog::Instance()->OpenDialog(menu_dialog_name[2], "Save",
+                    ImGuiFileDialog::Instance()->OpenDialog(menu_dialog_name[3], "Save",
                                                             FILTER_MODEL,
                                                             ".", "",
                                                             std::bind(&LinearInfosPane, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), 150, 1,
@@ -423,6 +435,9 @@ namespace ui
     {
         hierarchy_layer_.draw(scene, context_);
     }
+	void MainLayer::init_timeline(Scene *scene){
+		timeline_layer_.init(scene);
+	}
     void MainLayer::draw_timeline(Scene *scene)
     {
         timeline_layer_.draw(scene, context_);
