@@ -81,18 +81,11 @@ void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_
 		int duration = currentAnimation->get_duration();
 		int wrapped_time = current_time_;
 		
-		if (wrapped_time >= end_time)
-		{
-			wrapped_time = 0;
+		if (wrapped_time > end_time || wrapped_time < start_time) {
+			wrapped_time = start_time;
 		}
-		
-		if (wrapped_time < start_time)
-		{
-			wrapped_time = 0;
-		}
-		
-		wrapped_time = fmod(wrapped_time, duration);
-		// Check if the next animation is the same as the current one
+
+		wrapped_time = fmod(wrapped_time - start_time, duration);
 		
 		if(animationStack.size() == 1){
 			
