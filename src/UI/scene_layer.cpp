@@ -57,7 +57,7 @@ namespace ui
             // scene->
             ImGuiWindow *window = ImGui::GetCurrentWindow();
             is_hovered_ = !ImGuizmo::IsUsing() && ImGui::IsWindowFocused() && ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max);
-            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max))
+            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) && !ui_context.menu.is_dialog_open)
             {
                 anim::LOG("double click" + std::to_string(x) + " " + std::to_string(y));
                 ui_context.scene.is_picking = true;
