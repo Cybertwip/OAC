@@ -127,25 +127,24 @@ namespace anim
         }
 
         Assimp::Importer importer;
-        auto assimp_flag_ = aiProcess_CalcTangentSpace |
-                            aiProcess_GenSmoothNormals |
-                            aiProcess_ImproveCacheLocality |
-                            aiProcess_LimitBoneWeights |
-                            aiProcess_RemoveRedundantMaterials |
-                            aiProcess_SplitLargeMeshes |
-                            aiProcess_Triangulate |
-                            aiProcess_GenUVCoords |
-                            // aiProcess_GlobalScale |
-                            aiProcess_SortByPType |
-                            aiProcess_FindDegenerates |
-                            aiProcess_FindInvalidData |
-                            aiProcess_FindInstances |
-                            aiProcess_ValidateDataStructure |
-            //aiProcess_OptimizeGraph|
-                            aiProcess_OptimizeMeshes;
+		auto assimp_flag_ = aiProcess_CalcTangentSpace |
+		aiProcess_GenSmoothNormals |
+		aiProcess_ImproveCacheLocality |
+		aiProcess_LimitBoneWeights |
+		aiProcess_RemoveRedundantMaterials |
+		aiProcess_SplitLargeMeshes |
+		aiProcess_Triangulate |
+		aiProcess_GenUVCoords |
+		aiProcess_SortByPType |
+		aiProcess_FindDegenerates |
+		aiProcess_FindInvalidData |
+		aiProcess_FindInstances |
+		aiProcess_ValidateDataStructure |
+		aiProcess_OptimizeMeshes |
+		aiProcess_OptimizeGraph;
 
         importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
-        importer.SetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES, 128);
+        importer.SetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES, 512);
         // importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 100.0);
 
 

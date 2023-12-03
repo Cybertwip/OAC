@@ -85,7 +85,7 @@ void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_
 			wrapped_time = start_time;
 		}
 
-		wrapped_time = fmod(wrapped_time - start_time, duration);
+		wrapped_time = std::fmod(wrapped_time - start_time, duration);
 		
 		if(animationStack.size() == 1){
 			

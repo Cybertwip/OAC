@@ -84,7 +84,7 @@ namespace ui
         ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_MONITOR " Desktop", std::filesystem::path(userPath).append("Desktop").string());
         ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_DESCRIPTION " Documents", std::filesystem::path(userPath).append("Documents").string());
         ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_DOWNLOAD " Downloads", std::filesystem::path(userPath).append("Downloads").string());
-        ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_FAVORITE " Anim", std::filesystem::path("./").string());
+        ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_FAVORITE " OAC", std::filesystem::path("./").string());
 #elif __APPLE__
         std::string user_name;
         user_name = "/Users/" + std::string(getenv("USER"));
@@ -101,7 +101,7 @@ namespace ui
         {
             ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_DOWNLOAD " Downloads", homePath + "/Downloads");
         }
-        ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_FAVORITE " Anim", std::filesystem::path("./").string());
+        ImGuiFileDialog::Instance()->AddBookmark(ICON_MD_FAVORITE " OAC", std::filesystem::path("./").string());
 #endif
         std::ifstream wif("./bookmark");
         if (wif.good())
@@ -289,7 +289,7 @@ namespace ui
         }
         draw_python_modal(py_modal);
         int dialog_count = 0;
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
             if (ImGuiFileDialog::Instance()->Display(menu_dialog_name[i], ImGuiWindowFlags_NoCollapse, minSize))
             {
@@ -412,7 +412,13 @@ namespace ui
         }
         else
         {
-            context_.menu.is_dialog_open = false;
+			if (ImGuiFileDialog::Instance()->IsOpened())
+			{
+				context_.menu.is_dialog_open = true;
+			} else {
+				context_.menu.is_dialog_open = false;
+			}
+
         }
         ImGui::PopStyleColor();
     }
