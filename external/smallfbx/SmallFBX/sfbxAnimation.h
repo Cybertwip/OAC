@@ -65,6 +65,9 @@ protected:
     float m_reference_start{};
     float m_reference_stop{};
     std::vector<AnimationLayer*> m_anim_layers;
+	
+	friend class Document;
+
 };
 
 

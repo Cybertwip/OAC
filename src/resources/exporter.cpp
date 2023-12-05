@@ -131,12 +131,10 @@ namespace anim
 
         auto animation_comp = entity->get_component<AnimationComponent>();
         auto animation = animation_comp->get_mutable_animation();
-		doc->eraseObject(doc->getAnimationStacks()[0]);
-		doc->eraseObject(doc->getAnimationStacks()[1]);
+		auto stacks = doc->getAnimationStacks();
+		auto currentTake = doc->getCurrentTake();
 		sfbx::AnimationStack* take = doc->createObject<sfbx::AnimationStack>("take");
 		sfbx::AnimationLayer* layer = take->createLayer("deform");
-		
-
 //        animation->get_ai_animation(scene->mAnimations[0], scene->mRootNode, animation_comp->get_ticks_per_second_factor(), is_linear_);
 		doc->setCurrentTake(take);
 		
@@ -157,7 +155,7 @@ namespace anim
 		doc->exportFBXNodes();
 		
 //		doc->writeAscii("test_base_ascii.fbx");
-
+		
         if (!doc->writeBinary(output_path))
         {
             std::cerr << "Error exporting" << std::endl;
