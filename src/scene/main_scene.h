@@ -16,7 +16,7 @@ public:
     MainScene(uint32_t width, uint32_t height, std::shared_ptr<anim::SharedResources> resources = nullptr);
     ~MainScene() = default;
     void init_framebuffer(uint32_t width, uint32_t height) override;
-    void pre_draw() override;
+    void pre_draw(/*ui::UiContext& ui_context*/) override;
     void draw() override;
     void picking(int x, int y, bool is_only_bone) override;
 

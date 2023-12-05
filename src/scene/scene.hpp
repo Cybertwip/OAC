@@ -21,13 +21,17 @@ namespace anim
     class Framebuffer;
 }
 
+namespace ui {
+	struct UiContext;
+}
+
 class Scene
 {
 public:
     Scene() = default;
     virtual ~Scene() = default;
     virtual void init_framebuffer(uint32_t width, uint32_t height) = 0;
-    virtual void pre_draw() = 0;
+    virtual void pre_draw(/*ui::UiContext& ui_context*/) = 0;
     virtual void draw() = 0;
     virtual void picking(int x, int y, bool is_only_bone) = 0;
     virtual anim::Entity *get_mutable_selected_entity()

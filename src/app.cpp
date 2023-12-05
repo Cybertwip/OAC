@@ -82,10 +82,10 @@ void App::init_scene(uint32_t width, uint32_t height)
 	scenes_.push_back(std::make_shared<MainScene>(width, height, shared_resources_));
 	
 	import_model("./resources/models/mannequiny.fbx");
+	
 	scenes_[current_scene_idx_]->set_selected_entity(1);
 	
 	ui_->init_timeline(scenes_[current_scene_idx_].get());
-	
 }
 void App::loop()
 {
@@ -102,7 +102,6 @@ void App::loop()
 			
 			ui_->draw_dock(fps_);
 			
-			this->draw_scene();
 			
 			ui_->draw_component_layer(scenes_[current_scene_idx_].get());
 			
@@ -110,6 +109,8 @@ void App::loop()
 			
 			ui_->draw_timeline(scenes_[current_scene_idx_].get());
 			
+			this->draw_scene();
+
 			ui_->end();
 		}
 		post_draw();
@@ -344,11 +345,13 @@ void App::pre_draw()
 
 void App::draw_scene()
 {
+	auto &ui_context = const_cast<ui::UiContext&>(ui_->get_context());
+
 	size_t size = scenes_.size();
 	for (size_t i = 0; i < size; i++)
 	{
 		std::string scene_name = std::string("scene") + std::to_string(i + 1);
-		scenes_[i]->pre_draw();
+		scenes_[i]->pre_draw(/*ui_context*/);
 		ui_->draw_scene(scene_name, scenes_[i].get());
 		if (ui_->is_scene_layer_hovered(scene_name))
 		{

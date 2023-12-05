@@ -60,11 +60,35 @@ namespace ui
             if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) && !ui_context.menu.is_dialog_open)
             {
                 anim::LOG("double click" + std::to_string(x) + " " + std::to_string(y));
-                ui_context.scene.is_picking = true;
+				
+				is_bone_picking_mode_ = !is_bone_picking_mode_;
+				
+				ui_context.scene.is_picking = is_bone_picking_mode_;
+
                 ui_context.scene.x = x;
                 ui_context.scene.y = y;
             }
-
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) && !ui_context.menu.is_dialog_open && is_bone_picking_mode_)
+			{
+				anim::LOG("double click" + std::to_string(x) + " " + std::to_string(y));
+								
+				ui_context.scene.is_picking = true;
+				
+				ui_context.scene.x = x;
+				ui_context.scene.y = y;
+			}
+			
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) && !ui_context.menu.is_dialog_open && !is_bone_picking_mode_)
+			{
+				anim::LOG("double click" + std::to_string(x) + " " + std::to_string(y));
+				
+				ui_context.scene.is_picking = true;
+				
+				ui_context.scene.x = x;
+				ui_context.scene.y = y;
+			}
+			
+			
             // draw scene framebuffer
             ImGui::Image(reinterpret_cast<void *>(static_cast<intptr_t>(scene->get_mutable_framebuffer()->get_color_attachment())), ImVec2{width_, height_}, ImVec2{0, 1}, ImVec2{1, 0});
             if (width != width_ || height_ != height)
@@ -100,6 +124,7 @@ namespace ui
         auto &camera = scene->get_mutable_ref_camera();
         float *cameraView = const_cast<float *>(glm::value_ptr(camera->get_view()));
         float *cameraProjection = const_cast<float *>(glm::value_ptr(camera->get_projection()));
+		
         auto selected_entity = scene->get_mutable_selected_entity();
 
         if (selected_entity && current_gizmo_operation_ != ImGuizmo::OPERATION::NONE)
@@ -115,6 +140,7 @@ namespace ui
                                  object_mat_ptr,
                                  NULL,
                                  useSnap ? &snap[0] : NULL);
+			
             if (ImGuizmo::IsUsing())
             {
                 ui_context.entity.new_transform = glm::inverse(transform) * glm::make_mat4(object_mat_ptr);

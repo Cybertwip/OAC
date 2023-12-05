@@ -10,11 +10,17 @@
 #include <graphics/opengl/image.h>
 #include <graphics/opengl/framebuffer.h>
 
+#include <imgui/imgui.h>
+
+#include "UI/ui_context.h"
+
 #include "../entity/components/component.h"
 #include "../entity/components/pose_component.h"
 
 #include <filesystem>
 #include <graphics/post_processing.h>
+
+
 
 namespace fs = std::filesystem;
 
@@ -61,12 +67,17 @@ void MainScene::init_camera()
     camera_ = std::make_shared<glcpp::Camera>(glm::vec3(0.0f, 100.0f, 500.0f));
 }
 
-void MainScene::pre_draw()
+void MainScene::pre_draw(/*ui::UiContext& ui_context*/)
 {
     update_framebuffer();
     camera_->set_view_and_projection(framebuffer_->get_aspect());
     resources_->set_ubo_view(camera_->get_view());
     resources_->set_ubo_projection(camera_->get_projection());
+
+	
+//	if(ImGui::IsMouseClicked(ImGuiMouseButton_Left) ){
+//		set_selected_entity(nullptr);
+//	}
 
     draw_to_framebuffer();
 }
@@ -141,9 +152,19 @@ void MainScene::picking(int x, int y, bool is_bone_picking_mode)
                     auto pose = selected_entity_->get_component<anim::PoseComponent>();
 
                     set_selected_entity(pose->find(pixel_y));
+					
                     anim::LOG("pick bone: " + selected_entity_->get_name() + " " + std::to_string(selected_entity_->get_component<anim::ArmatureComponent>()->get_id()));
                 }
-            }
+            } else {
+				if (selected_entity_)
+				{
+					anim::LOG("entity: " + selected_entity_->get_name());
+					
+					selected_entity_->set_is_selected(true);
+					
+					set_selected_entity(selected_entity_);
+				}
+			}
         }
     }
 }

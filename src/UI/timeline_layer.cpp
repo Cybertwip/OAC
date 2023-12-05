@@ -164,8 +164,6 @@ namespace ui
         init_context(ui_context, scene);
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize;
 		
-		
-		
 		if(ui_context.component.is_add_animation_track){
 			ui_context.component.is_add_animation_track = false;
 			
@@ -198,37 +196,48 @@ namespace ui
  
 			ImGui::BeginTabBar("MyTabs", ImGuiTabBarFlags_None);
 			
-			auto anim_component = root_entity_->get_component<AnimationComponent>();
-			if (anim_component)
-			{
-				anim_component->clear_animation_stack();
-			}
+			
+			AnimationComponent* anim_component = nullptr;
+			
+			if(root_entity_){
+				anim_component = root_entity_->get_component<AnimationComponent>();
 
+				if (anim_component)
+				{
+					anim_component->clear_animation_stack();
+				}
+
+			}
+	
 			// Tab: Tracks
 			if (ImGui::BeginTabItem(ICON_MD_TRACK_CHANGES " Tracks"))
 			{
-				const auto &animations = resources_->get_animations();
-				
-				for(auto& item : g_tracksSequencer.mItems){
-					const auto& animation = animations[item.mId];
-
-					if(animator_->get_current_time() >= item.mFrameStart && animator_->get_current_time() <= item.mFrameEnd){
-						anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, item.mFrameStart, item.mFrameEnd));
-
+				if(anim_component){
+					const auto &animations = resources_->get_animations();
+					
+					for(auto& item : g_tracksSequencer.mItems){
+						const auto& animation = animations[item.mId];
+						
+						if(animator_->get_current_time() >= item.mFrameStart && animator_->get_current_time() <= item.mFrameEnd){
+							anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, item.mFrameStart, item.mFrameEnd));
+							
+						}
+						
+						auto& animationStack = anim_component->get_animation_stack();
+						
+						// Custom comparator function to sort based on start_time
+						auto comparator = [](const std::shared_ptr<StackedAnimation>& a, const std::shared_ptr<StackedAnimation>& b) {
+							return a->get_start_time() < b->get_start_time();
+						};
+						
+						// Sort animationStack using the custom comparator
+						std::sort(animationStack.begin(), animationStack.end(), comparator);
+						
+						
 					}
 					
-					auto& animationStack = anim_component->get_animation_stack();
-					
-					// Custom comparator function to sort based on start_time
-					auto comparator = [](const std::shared_ptr<StackedAnimation>& a, const std::shared_ptr<StackedAnimation>& b) {
-						return a->get_start_time() < b->get_start_time();
-					};
-					
-					// Sort animationStack using the custom comparator
-					std::sort(animationStack.begin(), animationStack.end(), comparator);
-
-
 				}
+				
 				auto &context = ui_context.timeline;
 				ImGuiIO &io = ImGui::GetIO();
 				
