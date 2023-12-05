@@ -13,9 +13,9 @@
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
 #include <json/json.h>
-#include <assimp/scene.h>
-#include <assimp/Exporter.hpp>
-#include <assimp/Importer.hpp>
+
+#include "SmallFBX.h"
+
 
 #include <fstream>
 #include <filesystem>
@@ -126,43 +126,22 @@ namespace anim
             return;
         }
 
-        Assimp::Importer importer;
-		auto assimp_flag_ = aiProcess_CalcTangentSpace |
-		aiProcess_GenSmoothNormals |
-		aiProcess_ImproveCacheLocality |
-		aiProcess_LimitBoneWeights |
-		aiProcess_RemoveRedundantMaterials |
-		aiProcess_SplitLargeMeshes |
-		aiProcess_Triangulate |
-		aiProcess_GenUVCoords |
-		aiProcess_SortByPType |
-		aiProcess_FindDegenerates |
-		aiProcess_FindInvalidData |
-		aiProcess_FindInstances |
-		aiProcess_ValidateDataStructure |
-		aiProcess_OptimizeMeshes |
-		aiProcess_OptimizeGraph;
+		sfbx::DocumentPtr doc = sfbx::MakeDocument(model_path);
 
-        importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
-        importer.SetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES, 512);
-        // importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 100.0);
-
-
-        aiScene *scene = const_cast<aiScene *>(importer.ReadFile(model_path, assimp_flag_));
-        // //       // aiScene *scene = new aiScene();
-        // //     // scene->mRootNode = new aiNode();
-        // //   // to_ai_node(scene->mRootNode, root_entity);
 
         auto animation_comp = entity->get_component<AnimationComponent>();
         auto animation = animation_comp->get_mutable_animation();
-        // delete scene->mAnimations[0];
-        scene->mAnimations = new aiAnimation *[1];
-        scene->mAnimations[0] = new aiAnimation();
-        scene->mNumAnimations = 1;
+		doc->eraseObject(doc->getAnimationStacks()[0]);
+		doc->eraseObject(doc->getAnimationStacks()[1]);
+		sfbx::AnimationStack* take = doc->createObject<sfbx::AnimationStack>("take");
+		sfbx::AnimationLayer* layer = take->createLayer("deform");
+		
 
-        animation->get_ai_animation(scene->mAnimations[0], scene->mRootNode, animation_comp->get_ticks_per_second_factor(), is_linear_);
-
-        Assimp::Exporter exporter;
+//        animation->get_ai_animation(scene->mAnimations[0], scene->mRootNode, animation_comp->get_ticks_per_second_factor(), is_linear_);
+		doc->setCurrentTake(take);
+		
+		animation->get_fbx_animation(doc, layer,  animation_comp->get_ticks_per_second_factor(), is_linear_);
+		
         auto save = std::filesystem::u8path(save_path);
         std::string ext = save.extension().string();
         std::string format = ext;
@@ -171,21 +150,17 @@ namespace anim
             output_path += ".fbx";
         }
 
-        if (ext.size() > 2 && ext[1] == 'g')
-        {
-            ext = "gltf2";
-            format = ext;
-        }
-        else
-        {
-            ext = "fbx";
-            format = "fbx";
-        }
+		ext = "fbx";
 
         LOG(std::string(save_path) + ": " + ext);
-        if (exporter.Export(scene, format, output_path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices) != AI_SUCCESS)
+		
+		doc->exportFBXNodes();
+		
+//		doc->writeAscii("test_base_ascii.fbx");
+
+        if (!doc->writeBinary(output_path))
         {
-            std::cerr << exporter.GetErrorString() << std::endl;
+            std::cerr << "Error exporting" << std::endl;
         }
     }
 

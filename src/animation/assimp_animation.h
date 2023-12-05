@@ -12,22 +12,26 @@
 #include <string>
 #include <set>
 
+#include "SmallFBX.h"
+
 namespace anim
 {
-    class AssimpAnimation : public Animation
+    class FbxAnimation : public Animation
     {
     public:
-        AssimpAnimation() = delete;
+		FbxAnimation() = delete;
 
-        AssimpAnimation(const aiAnimation *animation, const aiScene *scene, const char *path);
+		FbxAnimation(const aiAnimation *animation, const aiScene *scene, const char *path);
 
-        ~AssimpAnimation();
+        ~FbxAnimation();
 
     private:
         void init_animation(const aiAnimation *animation, const aiScene *scene, const char *path);
+		void process_bones(const sfbx::AnimationLayer *animation, const sfbx::Model *node);
         void process_bones(const aiAnimation *animation, const aiNode *root_node);
-        void process_bindpose(const aiNode *node);
-
+		void process_bindpose(const aiNode *node);
+		void process_bindpose(const sfbx::Model *node);
+		
     };
 
 }

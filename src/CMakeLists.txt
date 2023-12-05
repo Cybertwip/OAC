@@ -10,8 +10,7 @@ endif()
 
 add_library(glcpp STATIC ${GLCPP_SRC})
 
-set(LIBs STB_IMAGE imgui glad  jsoncpp_static)
-
+set(LIBs STB_IMAGE imgui glad SmallFBX jsoncpp_static)
 
 if(MSVC)
    target_compile_options(glcpp PUBLIC  "/utf-8")
@@ -143,6 +142,9 @@ event/event_history.cpp
 ./scene/scene.hpp
 ./scene/main_scene.cpp
 )
+
+target_include_directories(OAC  PUBLIC ../external/smallfbx)
+target_include_directories(test  PUBLIC ../external/smallfbx)
 
 if(MSVC)
   target_compile_options(OAC PUBLIC   "/utf-8")#  target_link_options(OAC PUBLIC "/INCREMENTAL")

@@ -113,6 +113,9 @@ add_subdirectory(external/jsoncpp)
 message("GLM")
 add_subdirectory(external/glm/)
 
+message("SmallFBX")
+add_subdirectory(external/smallfbx/)
+
 message("Python" ${CMAKE_BINARY_DIR}/bin/python/)
 set(Python3_ROOT_DIR ${CMAKE_BINARY_DIR}/bin/python)
 set(CMAKE_FIND_ROOT_PATH ${CMAKE_BINARY_DIR})

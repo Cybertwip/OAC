@@ -13,8 +13,11 @@
 #include <map>
 #include <utility>
 
+#include "SmallFBX.h"
+
 namespace anim
 {
+	class PoseComponent;
     struct KeyPosition
     {
         glm::vec3 position;
@@ -49,13 +52,19 @@ namespace anim
     {
     public:
         Bone();
-        Bone(const std::string &name, const aiNodeAnim *channel, const glm::mat4 &inverse_binding_pose);
+		Bone(const std::string &name, const aiNodeAnim *channel, const glm::mat4 &inverse_binding_pose);
+		
+		Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose);
+
+		
         void update(float animation_time, float factor);
         glm::mat4 &get_local_transform(float animation_time, float factor);
         const glm::mat4& get_bindpose() const;
         const std::set<float> &get_time_set() const;
         const std::string &get_name() const;
         float get_factor();
+		void get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCurveNode, sfbx::AnimationCurveNode* rotationCurveNode, sfbx::AnimationCurveNode* scaleCurveNode, float factor = 1.0, bool is_interpolated = true);
+		
         void get_ai_node(aiNodeAnim *channel, const aiMatrix4x4 &binding_pose_transform, float factor = 1.0, bool is_interpolated = true);
 
         void set_name(const std::string &name);

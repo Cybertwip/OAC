@@ -44,6 +44,7 @@ public:
 	void stop();
 	void reload();
 	void set_animation(Animation *animation);
+	void set_root_bone_name(const std::string& root_bone_name);
 	void set_current_frame_num_to_time(uint32_t frame);
 	void set_custom_tick_per_second(float tick_per_second);
 	void set_fps(float fps);
@@ -61,8 +62,10 @@ public:
 	float &get_mutable_fps();
 	float get_fps() const;
 	float get_tps() const;
-	
-	std::vector<std::shared_ptr<StackedAnimation>>& get_animation_stack() { 
+
+	const std::string& get_root_bone_name() const; 
+
+	std::vector<std::shared_ptr<StackedAnimation>>& get_animation_stack() {
 		return _animationStack;
 	}
 	

@@ -158,6 +158,8 @@ void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_
 	}
 	
 	entity->set_local(blendedLocal);
+	
+	
 
 	global_transformation *= entity->get_local();
 

@@ -44,6 +44,11 @@ void AnimationComponent::set_animation(Animation *animation)
 	init_animation();
 }
 
+void AnimationComponent::set_root_bone_name(const std::string& root_bone_name)
+{
+	animation_->set_root_bone_name(root_bone_name);
+}
+
 void AnimationComponent::set_current_frame_num_to_time(uint32_t frame)
 {
 	current_time_ = static_cast<float>(frame);
@@ -130,6 +135,10 @@ float AnimationComponent::get_fps() const
 float AnimationComponent::get_tps() const
 {
 	return custom_ticks_per_second_;
+}
+
+const std::string& AnimationComponent::get_root_bone_name() const{
+	return animation_->get_root_bone_name();
 }
 }
 

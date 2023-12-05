@@ -16,7 +16,7 @@ namespace anim
     public:
         PoseComponent();
 
-        Entity *get_root_entity();
+		Entity *get_root_entity();
         Animator *get_animator();
         AnimationComponent* get_animation_component();
 

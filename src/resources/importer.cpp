@@ -57,7 +57,13 @@ namespace anim
             const aiScene *scene = importer.ReadFile(path_.c_str(), assimp_flag_);
 
             model = import_model(scene);
+			
+			
+			
+			
             animations = import_animation(scene);
+			
+			
             if (model == nullptr && animations.size() == 0)
             {
                 LOG("ERROR::IMPORTER::NULL " + std::string(importer.GetErrorString()));
@@ -85,7 +91,7 @@ namespace anim
             for (unsigned int i = 0; i < scene->mNumAnimations; i++)
             {
                 auto animation = scene->mAnimations[i];
-                animations.push_back(std::make_shared<AssimpAnimation>(animation, scene, path_.c_str()));
+                animations.push_back(std::make_shared<FbxAnimation>(animation, scene, path_.c_str()));
             }
         }
         return animations;

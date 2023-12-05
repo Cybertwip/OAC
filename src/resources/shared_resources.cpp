@@ -261,6 +261,9 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 			}
 			pose = root_entity->add_component<PoseComponent>();
 			LOG("=============== POSE: " + parent_entity->get_name());
+			
+			animation->set_root_bone_name(parent_entity->get_name());
+
 			pose->set_bone_info_map(model->bone_info_map_);
 			pose->set_animator(animator_.get());
 			pose->set_shader(shaders_["animation"].get());

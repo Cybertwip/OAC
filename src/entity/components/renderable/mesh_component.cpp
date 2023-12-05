@@ -16,8 +16,9 @@ namespace anim
 
         for (auto &mesh : meshes_)
         {
-            if (entity_->is_selected_ || entity_->get_mutable_root()->is_selected_)
-                mesh->draw_outline(*shader_);
+            if (entity_->is_selected_ || entity_->get_mutable_root()->is_selected_){
+				mesh->draw_outline(*shader_);
+			}
             else
             {
                 mesh->draw(*shader_);
