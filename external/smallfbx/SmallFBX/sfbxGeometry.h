@@ -57,8 +57,8 @@ struct LayerElement
     RawVector<int> indices; // can be empty. in that case, size of data must equal with vertex count or index count.
     RawVector<T> data;
     RawVector<T> data_deformed; // relevant only for normal layers for now.
-    string_view mapping_mode = "";
-    string_view reference_mode = "";
+    std::string mapping_mode = "";
+	std::string reference_mode = "";
 };
 using LayerElementF2 = LayerElement<float2>;
 using LayerElementF3 = LayerElement<float3>;

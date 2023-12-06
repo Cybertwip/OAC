@@ -70,12 +70,15 @@ namespace ui
             }
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) && !ui_context.menu.is_dialog_open && is_bone_picking_mode_)
 			{
-				anim::LOG("double click" + std::to_string(x) + " " + std::to_string(y));
-								
-				ui_context.scene.is_picking = true;
-				
-				ui_context.scene.x = x;
-				ui_context.scene.y = y;
+				if(current_gizmo_operation_ == ImGuizmo::OPERATION::NONE){
+					anim::LOG("double click" + std::to_string(x) + " " + std::to_string(y));
+					
+					ui_context.scene.is_picking = true;
+					
+					ui_context.scene.x = x;
+					ui_context.scene.y = y;
+				}
+
 			}
 			
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) && !ui_context.menu.is_dialog_open && !is_bone_picking_mode_)

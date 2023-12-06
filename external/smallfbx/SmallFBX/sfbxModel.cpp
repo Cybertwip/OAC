@@ -346,6 +346,13 @@ void Mesh::importFBXObjects()
 #endif
 }
 
+void Mesh::exportFBXObjects()
+{
+	super::exportFBXObjects();
+	
+	
+}
+
 void Mesh::addChild(Object* v)
 {
     super::addChild(v);

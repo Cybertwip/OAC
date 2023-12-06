@@ -178,6 +178,7 @@ public:
 
 protected:
     void importFBXObjects() override;
+	void exportFBXObjects() override;
 
     GeomMesh* m_geom{};
     std::vector<Material*> m_materials;

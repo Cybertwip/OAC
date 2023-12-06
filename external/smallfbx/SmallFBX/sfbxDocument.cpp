@@ -109,6 +109,7 @@ bool Document::readBinary(std::istream& is)
             }
         }
         importFBXObjects();
+		
     }
     catch (const std::runtime_error& e) {
         sfbxPrint("sfbx::Document::read(): exception %s\n", e.what());
@@ -164,8 +165,6 @@ void Document::importFBXObjects()
     for (size_t i = 0; i < m_objects.size(); ++i) {
         auto obj = m_objects[i];
         obj->importFBXObjects();
-        if (obj->getParents().empty())
-            m_root_objects.push_back(obj.get());
     }
 
     if (Node* takes = findNode(sfbxS_Takes)) {
@@ -176,7 +175,6 @@ void Document::importFBXObjects()
 
     global_settings.importFBXObjects(this);
 }
-
 
 void GlobalSettings::importFBXObjects(Document *doc)
 {
@@ -349,7 +347,6 @@ void Document::unload()
     m_root_nodes.clear();
 
     m_objects.clear();
-    m_root_objects.clear();
     m_anim_stacks.clear();
     m_root_model = {};
     m_current_take = {};
@@ -511,7 +508,6 @@ void Document::addObject(ObjectPtr obj, bool check)
 void Document::eraseObject(Object* obj)
 {
     erase_if(m_objects, [obj](const ObjectPtr& p) { return p.get() == obj; });
-    erase(m_root_objects, obj);
     erase(m_anim_stacks, obj);
 
     //// this should not be happen
@@ -536,7 +532,6 @@ Object* Document::findObject(string_view name) const
 }
 
 span<ObjectPtr> Document::getAllObjects() const { return make_span(m_objects); }
-span<Object*> Document::getRootObjects() const { return make_span(m_root_objects); }
 Model* Document::getRootModel() const { return m_root_model; }
 
 span<AnimationStack*> Document::getAnimationStacks() const
@@ -583,6 +578,7 @@ void Document::exportFBXNodes()
 {
     m_nodes.clear();
     m_root_nodes.clear();
+	
 
     std::time_t t = std::time(nullptr);
     std::tm* now = std::localtime(&t);
@@ -725,6 +721,8 @@ void Document::exportFBXNodes()
         add_object_type(countObjects<AnimationCurve>(), sfbxS_AnimationCurve);
 
         add_object_type(countObjects<Material>(), sfbxS_Material);
+		add_object_type(countObjects<Video>(), sfbxS_Video);
+		add_object_type(countObjects<Texture>(), sfbxS_Texture);
     }
 
     auto takes = createNode(sfbxS_Takes);

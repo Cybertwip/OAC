@@ -350,8 +350,11 @@ void AnimationCurveNode::exportFBXObjects()
 void AnimationCurveNode::exportFBXConnections()
 {
     // ignore super::constructLinks()
-
-    m_document->createLinkOO(this, getParent());
+	for(auto& parent : getParents()){
+		if(auto layer = sfbx::as<sfbx::AnimationLayer>(parent)){
+			m_document->createLinkOO(this, layer);
+		}
+	}
     if (auto* info = FindAnimationKindInfo(m_kind)) {
         if (auto* target = getAnimationTarget())
             m_document->createLinkOP(this, target, info->link_name);
@@ -527,8 +530,9 @@ void AnimationCurveNode::setup(AnimationKind kind, Object* target, bool create_c
     }
 
     auto* acd = FindAnimationKindInfo(kind);
-    if (!m_target.object || !acd)
-        return;
+    if (!m_target.object || !acd){
+		return;
+	}
 
     m_kind = kind;
     setName(acd->object_name);

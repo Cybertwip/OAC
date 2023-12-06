@@ -94,15 +94,20 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 		
 		LOG("Found node: " + name_bone.first + " : " + std::to_string(limb != limbs.end()));
 
-		if (limb != limbs.end() && name_bone.second->get_time_set().size() != 0)
+		if (limb != limbs.end())
 		{
 			auto positionCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Position, limb->get());
 			auto rotationCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Rotation, limb->get());
 			auto scaleCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Scale, limb->get());
 			name_bone.second->get_fbx_node(sfbx::as<sfbx::Model>(limb->get()),  positionCurveNode, rotationCurveNode, scaleCurveNode, factor, is_linear);
 			
-			auto time_end = *std::next(name_bone.second->get_time_set().end(), -1);
-			duration = std::max(duration, time_end);
+			if(name_bone.second->get_time_set().size() > 0){
+				auto time_end = *std::next(name_bone.second->get_time_set().end(), -1);
+				duration = std::max(duration, time_end);
+
+			}
+		} else {
+			bool _ = false;
 		}
 	}
 	animationLayer->setName(anim_name);

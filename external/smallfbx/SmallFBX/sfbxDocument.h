@@ -136,7 +136,6 @@ private:
     std::vector<Node*> m_root_nodes;
 
     std::vector<ObjectPtr> m_objects;
-    std::vector<Object*> m_root_objects;
     std::vector<AnimationStack*> m_anim_stacks;
     Model* m_root_model{};
     AnimationStack* m_current_take{};

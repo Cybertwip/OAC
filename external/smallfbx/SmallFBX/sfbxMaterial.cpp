@@ -15,7 +15,7 @@ void Video::importFBXObjects()
 	for(auto& child : getNode()->getChildren()){
 		auto stream = std::stringstream();
 		
-		child->writeAscii(stream);
+		child->writeBinary(stream, 0);
 		
 		mChildStreams.push_back(std::move(stream));
 	}
@@ -28,9 +28,10 @@ void Video::exportFBXObjects()
 	
 	for(auto& stream : mChildStreams){
 		auto child = getNode()->createChild();
-		auto streamString = stream.str();
-		auto streamView = std::string_view(streamString);
-		child->readAscii(streamView);
+
+		stream.seekg(std::ios::beg);
+		
+		child->readBinary(stream, 0);
 	}
 }
 
@@ -64,6 +65,19 @@ void Texture::exportFBXObjects()
 	}
 }
 
+void Texture::exportFBXConnections()
+{
+	// ignore super::constructLinks()
+	
+	for(auto& parent : getParents()){
+		m_document->createLinkOO(this, getParent());
+	}
+	
+	for(std::size_t i = 0; i<m_child_property_names.size(); ++i){
+		m_document->createLinkOO(m_children[i], this);
+	}
+}
+
 ObjectClass Material::getClass() const { return ObjectClass::Material; }
 
 void Material::importFBXObjects()
@@ -94,16 +108,14 @@ void Material::exportFBXObjects()
 
 void Material::exportFBXConnections()
 {
-	// ignore super::constructLinks()
-	m_document->createLinkOO(this, getParent());
-	
+	for(auto& parent : getParents()){
+		m_document->createLinkOO(this, getParent());
+	}
+
 	for(std::size_t i = 0; i<m_child_property_names.size(); ++i){
 		m_document->createLinkOO(m_children[i], this);
 		m_document->createLinkOP(m_children[i], this, m_child_property_names[i]);
 	}
-	
-	
-	
 }
 
 

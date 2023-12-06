@@ -132,12 +132,31 @@ namespace anim
         auto animation_comp = entity->get_component<AnimationComponent>();
         auto animation = animation_comp->get_mutable_animation();
 		auto stacks = doc->getAnimationStacks();
-		auto currentTake = doc->getCurrentTake();
+		
+		std::vector<sfbx::AnimationCurveNode*> curveNodes;
+		for(auto& stack : stacks){
+			for(auto& layer : stack->getAnimationLayers()){
+				for(auto& node : layer->getAnimationCurveNodes()){
+					curveNodes.push_back(node);
+				}
+
+			}
+		}
+		
+		for(auto& node : curveNodes){
+			node->unlink();
+		}
+		
+		for(auto& stack : stacks){
+			doc->eraseObject(stack);
+		}
+
+		
 		sfbx::AnimationStack* take = doc->createObject<sfbx::AnimationStack>("take");
 		sfbx::AnimationLayer* layer = take->createLayer("deform");
-//        animation->get_ai_animation(scene->mAnimations[0], scene->mRootNode, animation_comp->get_ticks_per_second_factor(), is_linear_);
-		doc->setCurrentTake(take);
 		
+		doc->setCurrentTake(take);
+
 		animation->get_fbx_animation(doc, layer,  animation_comp->get_ticks_per_second_factor(), is_linear_);
 		
         auto save = std::filesystem::u8path(save_path);
@@ -153,8 +172,6 @@ namespace anim
         LOG(std::string(save_path) + ": " + ext);
 		
 		doc->exportFBXNodes();
-		
-//		doc->writeAscii("test_base_ascii.fbx");
 		
         if (!doc->writeBinary(output_path))
         {

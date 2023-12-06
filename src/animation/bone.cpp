@@ -223,14 +223,6 @@ float Bone::get_factor()
 
 void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCurveNode, sfbx::AnimationCurveNode* rotationCurveNode, sfbx::AnimationCurveNode* scaleCurveNode, float factor, bool is_interpolated){
 	
-	positionCurveNode->setName(name_);
-	rotationCurveNode->setName(name_);
-	scaleCurveNode->setName(name_);
-
-	std::vector<aiVectorKey> pos_keys;
-	std::vector<aiQuatKey> rot_keys;
-	std::vector<aiVectorKey> scl_keys;
-	
 	std::map<float, glm::mat4> transform_map;
 	transform_map[0.0f] = glm::mat4(1.0f);
 	for (auto time : time_set_)
@@ -239,7 +231,7 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 		transform_map[timestamp] = get_local_transform(timestamp, factor); // transformation;
 	}
 	
-	if (is_interpolated)
+	if (is_interpolated && time_set_.size() > 0)
 	{
 		float duration = *time_set_.rbegin();
 		float anim_time = 0.0f;
@@ -256,7 +248,6 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 		}
 		transform_map = new_transform_map;
 	}
-	
 	for (auto &transform : transform_map)
 	{
 		auto transformation = get_bindpose() * transform.second;
@@ -265,11 +256,7 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 
 		float time = transform.first / 60.0f;
 
-		if(true){
-			positionCurveNode->addValue(time, sfbx::float3{ t.x, t.y, t.z });
-		} else {
-			positionCurveNode->addValue(time, sfbx::float3{ 0, 0, 0 });
-		}
+		positionCurveNode->addValue(time, sfbx::float3{ t.x, t.y, t.z });
 		// Extract the rotation axis as a glm::vec3
 		glm::vec3 eulerAngles = glm::eulerAngles(r);
 		
@@ -278,6 +265,23 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 		rotationCurveNode->addValue(time, sfbx::float3{ eulerAnglesDeg.x, eulerAnglesDeg.y, eulerAnglesDeg.z});
 
 		scaleCurveNode->addValue(time, sfbx::float3{ s.x, s.y, s.z });
+	}
+	
+	if(transform_map.empty()){
+		auto transformation = SfbxMatToGlmMat(limb->getGlobalMatrix());
+		
+		auto [t, r, s] = DecomposeTransform(transformation);
+
+		
+		positionCurveNode->addValue(0, sfbx::float3{ t.x, t.y, t.z });
+		// Extract the rotation axis as a glm::vec3
+		glm::vec3 eulerAngles = glm::eulerAngles(r);
+		
+		glm::vec3 eulerAnglesDeg = glm::degrees(glm::eulerAngles(r));
+		
+		rotationCurveNode->addValue(0, sfbx::float3{ eulerAnglesDeg.x, eulerAnglesDeg.y, eulerAnglesDeg.z});
+		
+		scaleCurveNode->addValue(0, sfbx::float3{ s.x, s.y, s.z });
 	}
 	
 	limb->setPreRotation(sfbx::float3{ 0, 0, 0 });

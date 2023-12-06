@@ -39,7 +39,7 @@ void FbxAnimation::init_animation(const aiAnimation *animation, const aiScene *s
 	std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(limbs), condition);
 	
 	
-	auto animationLayer = doc->getAnimationStacks()[1]->getAnimationLayers()[0];
+	auto animationLayer = doc->getAnimationStacks()[0]->getAnimationLayers()[0];
 	
 	process_bones(animationLayer, doc->getRootModel());
 

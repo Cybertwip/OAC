@@ -181,8 +181,8 @@ void GeomMesh::importFBXObjects()
                 if (n->getName() == sfbxS_LayerElement) {
                     GetChildPropertyValue<string_view>(tmp.type, n, sfbxS_Type);
                     GetChildPropertyValue<int>(tmp.index, n, sfbxS_TypedIndex);
+					layer.push_back(std::move(tmp));
                 }
-                layer.push_back(std::move(tmp));
             }
             m_layers.push_back(std::move(layer));
         }
@@ -237,94 +237,106 @@ void GeomMesh::exportFBXObjects()
     int clayers = 0;
 
     // normal layers
+	Node* l = nullptr;
+	if(!m_normal_layers.empty()){
+		l = n->createChild(sfbxS_LayerElementNormal, 0);
+
+	}
+
     for (auto& layer : m_normal_layers) {
         if (layer.data.empty())
             continue;
 
         ++clayers;
-        auto l = n->createChild(sfbxS_LayerElementNormal);
-        l->createChild(sfbxS_Version, sfbxI_LayerElementNormalVersion);
-        l->createChild(sfbxS_Name, layer.name);
+		l->createChild(sfbxS_Version, sfbxI_LayerElementNormalVersion);
+		l->createChild(sfbxS_Name, layer.name);
 
         add_mapping_and_reference_info(l, layer);
-        l->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
+		l->createChild(sfbxS_Normals, make_adaptor<double3>(layer.data));
         if (!layer.indices.empty())
-            l->createChild(sfbxS_NormalsIndex, layer.indices);
+			l->createChild(sfbxS_NormalsIndex, layer.indices);
     }
 
     // uv layers
+	if(!m_uv_layers.empty()){
+		l = n->createChild(sfbxS_LayerElementUV, 0);
+	}
+
     for (auto& layer : m_uv_layers) {
         if (layer.data.empty())
             continue;
 
         ++clayers;
-        auto l = n->createChild(sfbxS_LayerElementUV);
-        l->createChild(sfbxS_Version, sfbxI_LayerElementUVVersion);
-        l->createChild(sfbxS_Name, layer.name);
+
+		l->createChild(sfbxS_Version, sfbxI_LayerElementUVVersion);
+		l->createChild(sfbxS_Name, layer.name);
 
         add_mapping_and_reference_info(l, layer);
-        l->createChild(sfbxS_UV, make_adaptor<double2>(layer.data));
+		l->createChild(sfbxS_UV, make_adaptor<double2>(layer.data));
         if (!layer.indices.empty())
-            l->createChild(sfbxS_UVIndex, layer.indices);
+			l->createChild(sfbxS_UVIndex, layer.indices);
     }
 
     // color layers
+	if(!m_color_layers.empty()){
+		l = n->createChild(sfbxS_LayerElementColor, 0);
+	}
+
     for (auto& layer : m_color_layers) {
         if (layer.data.empty())
             continue;
 
         ++clayers;
-        auto l = n->createChild(sfbxS_LayerElementColor);
-        l->createChild(sfbxS_Version, sfbxI_LayerElementColorVersion);
-        l->createChild(sfbxS_Name, layer.name);
+		l->createChild(sfbxS_Version, sfbxI_LayerElementColorVersion);
+		l->createChild(sfbxS_Name, layer.name);
 
         add_mapping_and_reference_info(l, layer);
-        l->createChild(sfbxS_Colors, make_adaptor<double4>(layer.data));
+		l->createChild(sfbxS_Colors, make_adaptor<double4>(layer.data));
         if (!layer.indices.empty())
-            l->createChild(sfbxS_ColorIndex, layer.indices);
+			l->createChild(sfbxS_ColorIndex, layer.indices);
     }
 
     // material layers
+	
+	if(!m_material_layers.empty()){
+		l = n->createChild(sfbxS_LayerElementMaterial, 0);
+	}
+
     for (auto& layer : m_material_layers) {
         if (layer.data.empty())
             continue;
 
         ++clayers;
-        auto l = n->createChild(sfbxS_LayerElementMaterial);
-        l->createChild(sfbxS_Version, sfbxI_LayerElementMaterialVersion);
-        l->createChild(sfbxS_Name, layer.name);
+		l->createChild(sfbxS_Version, sfbxI_LayerElementMaterialVersion);
+		l->createChild(sfbxS_Name, layer.name);
 
+		
         //TODO add_mapping_and_reference_info+checkModes?
-        l->createChild(sfbxS_MappingInformationType, "ByPolygon");
-        l->createChild(sfbxS_ReferenceInformationType, "Direct");
-        l->createChild(sfbxS_Materials, layer.data);
+		
+		add_mapping_and_reference_info(l, layer);
+
+		l->createChild(sfbxS_Materials, layer.data);
     }
 
     if (clayers) {
-        // layer info
-        auto l = n->createChild(sfbxS_Layer, 0);
-        l->createChild(sfbxS_Version, sfbxI_LayerVersion);
-        //TODO layers list
-        if (!m_normal_layers.empty()) {
-            auto le = l->createChild(sfbxS_LayerElement);
-            le->createChild(sfbxS_Type, sfbxS_LayerElementNormal);
-            le->createChild(sfbxS_TypedIndex, 0);
-        }
-        if (!m_uv_layers.empty()) {
-            auto le = l->createChild(sfbxS_LayerElement);
-            le->createChild(sfbxS_Type, sfbxS_LayerElementUV);
-            le->createChild(sfbxS_TypedIndex, 0);
-        }
-        if (!m_color_layers.empty()) {
-            auto le = l->createChild(sfbxS_LayerElement);
-            le->createChild(sfbxS_Type, sfbxS_LayerElementColor);
-            le->createChild(sfbxS_TypedIndex, 0);
-        }
-        if (!m_material_layers.empty()) {
-            auto le = l->createChild(sfbxS_LayerElement);
-            le->createChild(sfbxS_Type, sfbxS_LayerElementMaterial);
-            le->createChild(sfbxS_TypedIndex, 0);
-        }
+		
+		auto layerContainer = n->createChild(sfbxS_Layer, 0);
+
+		layerContainer->createChild(sfbxS_Version, sfbxI_LayerVersion);
+
+		for (auto& layer : m_layers) {
+
+			for(auto& desc : layer){
+
+				auto le = layerContainer->createChild(sfbxS_LayerElement);
+				
+				le->createChild(sfbxS_Type, desc.type);
+				le->createChild(sfbxS_TypedIndex, desc.index);
+
+			}
+			
+		}
+		
     }
 }
 

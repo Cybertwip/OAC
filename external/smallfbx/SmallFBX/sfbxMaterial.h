@@ -32,7 +32,8 @@ public:
 protected:
 	void importFBXObjects() override;
 	void exportFBXObjects() override;
-	
+	void exportFBXConnections() override;
+
 private:
 	std::vector<std::stringstream> mChildStreams;
 };
