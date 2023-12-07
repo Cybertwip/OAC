@@ -15,6 +15,7 @@ namespace anim
 {
     Importer::Importer()
         : assimp_flag_(
+			  aiProcess_GlobalScale |
               aiProcess_CalcTangentSpace |
               aiProcess_GenSmoothNormals |
               aiProcess_ImproveCacheLocality |
@@ -57,9 +58,6 @@ namespace anim
             const aiScene *scene = importer.ReadFile(path_.c_str(), assimp_flag_);
 
             model = import_model(scene);
-			
-			
-			
 			
             animations = import_animation(scene);
 			

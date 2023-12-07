@@ -160,6 +160,9 @@ void Document::importFBXObjects()
             }
         }
     }
+	
+	global_settings.importFBXObjects(this);
+
 
     // index based loop because m_objects maybe push_backed in the loop
     for (size_t i = 0; i < m_objects.size(); ++i) {
@@ -173,7 +176,6 @@ void Document::importFBXObjects()
             m_current_take = t;
     }
 
-    global_settings.importFBXObjects(this);
 }
 
 void GlobalSettings::importFBXObjects(Document *doc)
@@ -217,6 +219,16 @@ void GlobalSettings::importFBXObjects(Document *doc)
 //            prop->createChild(sfbxS_P, sfbxS_CoordAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
 //            prop->createChild(sfbxS_P, sfbxS_OriginalUpAxis, sfbxS_int, sfbxS_Integer, "", -1);
 //            prop->createChild(sfbxS_P, sfbxS_OriginalUpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
+
+		if (name == sfbxS_UnitScaleFactor) {
+			assert(propssize >= 5);
+			unit_scale = c->getProperty(4)->getValue<float64>();
+		}
+
+		if (name == sfbxS_OriginalUnitScaleFactor) {
+			assert(propssize >= 5);
+			original_unit_scale = c->getProperty(4)->getValue<float64>();
+		}
 
 //            prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", 1.0);
 //            prop->createChild(sfbxS_P, sfbxS_OriginalUnitScaleFactor, sfbxS_double, sfbxS_Number, "", 1.0);
@@ -655,8 +667,8 @@ void Document::exportFBXNodes()
         prop->createChild(sfbxS_P, sfbxS_CoordAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
         prop->createChild(sfbxS_P, sfbxS_OriginalUpAxis, sfbxS_int, sfbxS_Integer, "", -1);
         prop->createChild(sfbxS_P, sfbxS_OriginalUpAxisSign, sfbxS_int, sfbxS_Integer, "", 1);
-        prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", 1.0);
-        prop->createChild(sfbxS_P, sfbxS_OriginalUnitScaleFactor, sfbxS_double, sfbxS_Number, "", 1.0);
+        prop->createChild(sfbxS_P, sfbxS_UnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.unit_scale);
+        prop->createChild(sfbxS_P, sfbxS_OriginalUnitScaleFactor, sfbxS_double, sfbxS_Number, "", this->global_settings.original_unit_scale);
         prop->createChild(sfbxS_P, sfbxS_AmbientColor, sfbxS_ColorRGB sfbxS_ColorRGB, sfbxS_Color, "", 0.0, 0.0, 0.0);
         prop->createChild(sfbxS_P, sfbxS_DefaultCamera, sfbxS_KString, "", "", this->global_settings.camera);
         prop->createChild(sfbxS_P, sfbxS_TimeMode, sfbxS_enum, "", "", 0);

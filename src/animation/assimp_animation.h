@@ -27,10 +27,10 @@ namespace anim
 
     private:
         void init_animation(const aiAnimation *animation, const aiScene *scene, const char *path);
-		void process_bones(const sfbx::AnimationLayer *animation, const sfbx::Model *node);
+		void process_bones(const sfbx::AnimationLayer *animation, sfbx::Model *node);
         void process_bones(const aiAnimation *animation, const aiNode *root_node);
 		void process_bindpose(const aiNode *node);
-		void process_bindpose(const sfbx::Model *node);
+		void process_bindpose(sfbx::Model *node);
 		
     };
 

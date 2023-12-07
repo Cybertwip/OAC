@@ -74,7 +74,7 @@ void FbxAnimation::process_bones(const aiAnimation *animation, const aiNode *roo
 }
 
 
-void FbxAnimation::process_bones(const sfbx::AnimationLayer *animation, const sfbx::Model *node)
+void FbxAnimation::process_bones(const sfbx::AnimationLayer *animation, sfbx::Model *node)
 {
 	auto curveNodes = animation->getAnimationCurveNodes();
 	
@@ -125,7 +125,7 @@ void FbxAnimation::process_bindpose(const aiNode *node)
 }
 
 
-void FbxAnimation::process_bindpose(const sfbx::Model *node)
+void FbxAnimation::process_bindpose(sfbx::Model *node)
 {
 	if (node)
 	{

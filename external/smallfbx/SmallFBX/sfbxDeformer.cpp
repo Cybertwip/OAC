@@ -471,6 +471,7 @@ void BindPose::exportFBXObjects()
 }
 
 span<BindPose::PoseData> BindPose::getPoseData() const { return make_span(m_pose_data); }
-void BindPose::addPoseData(Model* joint, float4x4 bind_matrix) { m_pose_data.push_back({ joint, bind_matrix }); }
+void BindPose::addPoseData(Model* joint, float4x4 bind_matrix) {
+	m_pose_data.push_back({ joint, bind_matrix }); }
 
 } // namespace sfbx

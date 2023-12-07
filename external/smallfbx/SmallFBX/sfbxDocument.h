@@ -22,7 +22,8 @@ enum class FileVersion : int
 
 struct GlobalSettings
 {
-    double unit_scale = 1;
+	double unit_scale = 1;
+	double original_unit_scale = 1;
     std::string camera = "Camera";
     int64_t time_stop = 0;//sfbxI_TicksPerSecond;
 
