@@ -42,11 +42,6 @@ void Video::importFBXObjects()
 	}
 	
 	for(auto& child : getNode()->getChildren()){
-		
-		if(child->getName() == "Properties70"){
-			continue;
-		}
-
 		auto stream = std::stringstream();
 		
 		if(child->getName() == "Filename" || child->getName() == "RelativeFilename"){
@@ -101,12 +96,7 @@ void Texture::importFBXObjects()
 	}
 	
 	
-	for(auto& child : getNode()->getChildren()){
-
-		if(child->getName() == "Properties70"){
-			continue;
-		}
-		
+	for(auto& child : getNode()->getChildren()){		
 		if(child->getName() == "FileName" || child->getName() == "RelativeFilename"){
 			
 			if(hasVideo){
