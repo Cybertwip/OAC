@@ -75,19 +75,19 @@ public:
     // T: Mesh, Camera, Light, LimbNode, Skin, etc.
     // refer TestFBX.cpp for how to use. or refer sfbxEachObjectType() in sfbxObject.h for complete type list.
     template<class T>
-    T* createObject(string_view name = {});
+    std::shared_ptr<T> createObject(string_view name = {});
 
-    Object* findObject(int64 id) const;
+    ObjectPtr findObject(int64 id) const;
     // name accepts both full name and display name. (see MakeFullName() etc)
-    Object* findObject(string_view name) const;
+	ObjectPtr findObject(string_view name) const;
     span<ObjectPtr> getAllObjects() const;
     span<Object*> getRootObjects() const;
-    Model* getRootModel() const;
+	std::shared_ptr<Model> getRootModel() const;
 
-    span<AnimationStack*> getAnimationStacks() const;
-    AnimationStack* findAnimationStack(string_view name) const;
-    AnimationStack* getCurrentTake() const;
-    void setCurrentTake(AnimationStack* v);
+    span<std::shared_ptr<AnimationStack>> getAnimationStacks() const;
+	std::shared_ptr<AnimationStack> findAnimationStack(string_view name) const;
+	std::shared_ptr<AnimationStack> getCurrentTake() const;
+    void setCurrentTake(std::shared_ptr<AnimationStack> v);
 
     bool mergeAnimations(Document* doc);
     bool mergeAnimations(DocumentPtr doc) { return mergeAnimations(doc.get()); }
@@ -100,7 +100,7 @@ public:
     template<class T>
     size_t countObjects() const
     {
-        return count(m_objects, [](auto& p) { return as<T>(p.get()) && p->getID() != 0; });
+        return count(m_objects, [](auto& p) { return as<T>(p) && p->getID() != 0; });
     }
 
     GlobalSettings global_settings;
@@ -120,12 +120,13 @@ public:
     span<NodePtr> getAllNodes() const;
     span<Node*> getRootNodes() const;
 
-    Object* createObject(ObjectClass t, ObjectSubClass s);
+    ObjectPtr createObject(ObjectClass t, ObjectSubClass s);
     void addObject(ObjectPtr obj, bool check = false);
-    void eraseObject(Object* obj);
+		
+    void eraseObject(ObjectPtr obj);
 
-    void createLinkOO(Object* child, Object* parent);
-    void createLinkOP(Object* child, Object* parent, string_view target);
+    void createLinkOO(ObjectPtr child, ObjectPtr parent);
+    void createLinkOP(ObjectPtr child, ObjectPtr parent, string_view target);
 
 private:
     void initialize();
@@ -137,9 +138,9 @@ private:
     std::vector<Node*> m_root_nodes;
 
     std::vector<ObjectPtr> m_objects;
-    std::vector<AnimationStack*> m_anim_stacks;
-    Model* m_root_model{};
-    AnimationStack* m_current_take{};
+    std::vector<std::shared_ptr<AnimationStack>> m_anim_stacks;
+	std::shared_ptr<Model> m_root_model{};
+	std::shared_ptr<AnimationStack> m_current_take{};
 };
 
 template<class... T>

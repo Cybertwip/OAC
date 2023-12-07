@@ -120,11 +120,13 @@ bool Document::readBinary(std::istream& is)
 
 void Document::importFBXObjects()
 {
+	std::vector<ObjectPtr> newObjects;
     if (Node* objects = findNode(sfbxS_Objects)) {
         initialize();
         for (Node* n : objects->getChildren()) {
-            if (Object* obj = createObject(GetObjectClass(n), GetObjectSubClass(n))) {
+            if (ObjectPtr obj = createObject(GetObjectClass(n), GetObjectSubClass(n))) {
                 obj->setNode(n);
+				newObjects.push_back(obj);
             }
         }
     }
@@ -134,22 +136,22 @@ void Document::importFBXObjects()
             auto name = n->getName();
             auto ct = GetPropertyString(n, 0);
             if (name == sfbxS_C && ct == sfbxS_OO) {
-                Object* child = findObject(GetPropertyValue<int64>(n, 1));
-                Object* parent = findObject(GetPropertyValue<int64>(n, 2));
+                ObjectPtr child = FindObjectById(newObjects, GetPropertyValue<int64>(n, 1));
+				ObjectPtr parent = FindObjectById(newObjects, GetPropertyValue<int64>(n, 2));
                 if (child && parent)
                     parent->addChild(child);
             }
             else if (name == sfbxS_C && ct == sfbxS_OP) {
-                Object* child = findObject(GetPropertyValue<int64>(n, 1));
-                Object* parent = findObject(GetPropertyValue<int64>(n, 2));
+				ObjectPtr child = FindObjectById(newObjects,GetPropertyValue<int64>(n, 1));
+				ObjectPtr parent = FindObjectById(newObjects, GetPropertyValue<int64>(n, 2));
                 auto p = GetPropertyString(n, 3);
                 if (child && parent)
                     parent->addChild(child, p);
             }
 #ifdef sfbxEnableLegacyFormatSupport
             else if (name == sfbxS_Connect && ct == sfbxS_OO) {
-                Object* child = findObject(GetPropertyString(n, 1));
-                Object* parent = findObject(GetPropertyString(n, 2));
+                ObjectPtr child = FindObjectByName(newObjects, GetPropertyString(n, 1));
+                ObjectPtr parent = FindObjectByName(newObjects, GetPropertyString(n, 2));
                 if (child && parent)
                     parent->addChild(child);
             }
@@ -163,7 +165,6 @@ void Document::importFBXObjects()
 	
 	global_settings.importFBXObjects(this);
 
-
     // index based loop because m_objects maybe push_backed in the loop
     for (size_t i = 0; i < m_objects.size(); ++i) {
         auto obj = m_objects[i];
@@ -172,7 +173,7 @@ void Document::importFBXObjects()
 
     if (Node* takes = findNode(sfbxS_Takes)) {
         auto current = GetChildPropertyString(takes, sfbxS_Current);
-        if (auto* t = findAnimationStack(current))
+        if (auto t = findAnimationStack(current))
             m_current_take = t;
     }
 
@@ -407,7 +408,7 @@ Node* Document::findNode(string_view name) const
 span<sfbx::NodePtr> Document::getAllNodes() const { return make_span(m_nodes); }
 span<Node*> Document::getRootNodes() const { return make_span(m_root_nodes); }
 
-void Document::createLinkOO(Object* child, Object* parent)
+void Document::createLinkOO(ObjectPtr child, ObjectPtr parent)
 {
     if (!child || !parent)
         return;
@@ -415,7 +416,7 @@ void Document::createLinkOO(Object* child, Object* parent)
         c->createChild(sfbxS_C, sfbxS_OO, child->getID(), parent->getID());
 }
 
-void Document::createLinkOP(Object* child, Object* parent, string_view target)
+void Document::createLinkOP(ObjectPtr child, ObjectPtr parent, string_view target)
 {
     if (!child || !parent)
         return;
@@ -423,7 +424,7 @@ void Document::createLinkOP(Object* child, Object* parent, string_view target)
         c->createChild(sfbxS_C, sfbxS_OP, child->getID(), parent->getID(), target);
 }
 
-Object* Document::createObject(ObjectClass c, ObjectSubClass s)
+ObjectPtr Document::createObject(ObjectClass c, ObjectSubClass s)
 {
     Object* r{};
     switch (c) {
@@ -482,25 +483,29 @@ Object* Document::createObject(ObjectClass c, ObjectSubClass s)
     default: break;
     }
 
+	ObjectPtr pointer = nullptr;
     if (r) {
-        addObject(ObjectPtr(r));
+		pointer = ObjectPtr(r);
+        addObject(pointer);
     }
     else {
         sfbxPrint("sfbx::Document::createObject(): unrecongnized type \"%s\"\n", GetObjectClassName(c).data());
     }
-    return r;
+    return pointer;
 }
 
 template<class T>
-T* Document::createObject(string_view name)
+std::shared_ptr<T> Document::createObject(string_view name)
 {
     T* r = new T();
-    r->setName(name);
-    addObject(ObjectPtr(r));
-    return r;
+	
+	std::shared_ptr<T> pointer(r);
+	pointer->setName(name);
+    addObject(pointer);
+    return pointer;
 }
 
-#define Body(T) template T* Document::createObject(string_view name);
+#define Body(T) template std::shared_ptr<T> Document::createObject(string_view name);
 sfbxEachObjectType(Body)
 #undef Body
 
@@ -509,17 +514,16 @@ void Document::addObject(ObjectPtr obj, bool check)
     if (obj) {
         if (check && find(m_objects, obj))
             return;
-        m_objects.push_back(obj);
-        if (auto take = as<AnimationStack>(obj.get()))
+        if (auto take = as<AnimationStack>(obj))
             m_anim_stacks.push_back(take);
         obj->m_document = this;
-    }
+		m_objects.push_back(obj);
+	}
 }
 
-
-void Document::eraseObject(Object* obj)
+void Document::eraseObject(ObjectPtr obj)
 {
-    erase_if(m_objects, [obj](const ObjectPtr& p) { return p.get() == obj; });
+    erase_if(m_objects, [obj](const ObjectPtr& p) { return p == obj; });
     erase(m_anim_stacks, obj);
 
     //// this should not be happen
@@ -531,33 +535,39 @@ void Document::eraseObject(Object* obj)
 #pragma warning(push)
 #pragma warning(disable:26815)
 
-Object* Document::findObject(int64 id) const
+ObjectPtr Document::findObject(int64 id) const
 {
-    return find_if(m_objects, [&id](const ObjectPtr& p) { return p->getID() == id; }).get();
+	auto iterator = std::find_if(m_objects.begin(), m_objects.end(), [&id](ObjectPtr p) { return p->getID() == id; });
+	
+	if(iterator != m_objects.end()){
+		return *iterator;
+	} else {
+		return nullptr;
+	}
 }
 
 #pragma warning(pop)
 
-Object* Document::findObject(string_view name) const
+ObjectPtr Document::findObject(string_view name) const
 {
     return FindObjectByName(m_objects, name);
 }
 
 span<ObjectPtr> Document::getAllObjects() const { return make_span(m_objects); }
-Model* Document::getRootModel() const { return m_root_model; }
+std::shared_ptr<Model> Document::getRootModel() const { return m_root_model; }
 
-span<AnimationStack*> Document::getAnimationStacks() const
+span<std::shared_ptr<AnimationStack>> Document::getAnimationStacks() const
 {
     return make_span(m_anim_stacks);
 }
 
-AnimationStack* Document::findAnimationStack(string_view name) const
+std::shared_ptr<AnimationStack> Document::findAnimationStack(string_view name) const
 {
     return FindObjectByName(m_anim_stacks, name);
 }
 
-AnimationStack* Document::getCurrentTake() const { return m_current_take; }
-void Document::setCurrentTake(AnimationStack* v) { m_current_take = v; }
+std::shared_ptr<AnimationStack> Document::getCurrentTake() const { return m_current_take; }
+void Document::setCurrentTake(std::shared_ptr<AnimationStack> v) { m_current_take = v; }
 
 
 bool Document::mergeAnimations(Document* doc)
@@ -590,7 +600,6 @@ void Document::exportFBXNodes()
 {
     m_nodes.clear();
     m_root_nodes.clear();
-	
 
     std::time_t t = std::time(nullptr);
     std::tm* now = std::localtime(&t);
@@ -739,7 +748,7 @@ void Document::exportFBXNodes()
 
     auto takes = createNode(sfbxS_Takes);
     takes->createChild(sfbxS_Current, take_name);
-    for (auto* t : m_anim_stacks) {
+    for (auto t : m_anim_stacks) {
         auto take = takes->createChild(sfbxS_Take, t->getName());
         take->createChild(sfbxS_FileName, std::string(t->getName()) + ".tak");
 
@@ -755,13 +764,13 @@ void Document::exportFBXNodes()
 }
 
 
-template<class T> T* Object::createChild(string_view name)
+template<class T>  std::shared_ptr<T>  Object::createChild(string_view name)
 {
     auto ret = m_document->createObject<T>(name);
     addChild(ret);
     return ret;
 }
-#define Body(T) template T* Object::createChild(string_view name);
+#define Body(T) template std::shared_ptr<T>  Object::createChild(string_view name);
 sfbxEachObjectType(Body)
 #undef Body
 

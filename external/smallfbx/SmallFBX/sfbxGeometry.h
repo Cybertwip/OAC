@@ -15,20 +15,20 @@ class Geometry : public Object
 using super = Object;
 public:
     ObjectClass getClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
-    Model* getModel() const;
+	std::shared_ptr<Model> getModel() const;
     bool hasDeformer() const;
     bool hasSkinDeformer() const;
-    span<Deformer*> getDeformers() const;
+    span<std::shared_ptr<Deformer>> getDeformers() const;
 
     // T: Skin, BlendShape
     template<class T, sfbxRestrict(is_deformer<T>)>
-    T* createDeformer();
+	std::shared_ptr<T> createDeformer();
 
 protected:
-    std::vector<Deformer*> m_deformers;
+    std::vector<std::shared_ptr<Deformer>> m_deformers;
 };
 
 //for reference only, fbx stores as strings

@@ -12,7 +12,7 @@ using super = Object;
 public:
     ObjectClass getClass() const override;
 
-    GeomMesh* getBaseMesh() const;
+	std::shared_ptr<GeomMesh> getBaseMesh() const;
 
     // apply deform to dst. size of dst must be equal with base mesh.
     virtual void deformPoints(span<float3> dst) const;
@@ -56,29 +56,28 @@ class Skin : public Deformer
 using super = Deformer;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
-    GeomMesh* getMesh() const;
-    span<Cluster*> getClusters() const;
+	std::shared_ptr<GeomMesh> getMesh() const;
+    span<std::shared_ptr<Cluster>> getClusters() const;
     const JointWeights& getJointWeights() const;
     JointWeights createFixedJointWeights(int joints_per_vertex) const;
     const JointMatrices& getJointMatrices() const;
 
     // joint should be Null, Root or LimbNode
-    Cluster* createCluster(Model* joint);
+	std::shared_ptr<Cluster> createCluster(std::shared_ptr<Model> joint);
 
     // apply deform to dst. size of dst must be equal with base mesh.
     void deformPoints(span<float3> dst) const override;
     void deformNormals(span<float3> dst) const override;
 
 protected:
-    void importFBXObjects() override;
     void exportFBXObjects() override;
-    void addParent(Object* v) override;
+    void addParent(ObjectPtr v) override;
 
-    GeomMesh* m_mesh{};
-    std::vector<Cluster*> m_clusters;
+	std::shared_ptr<GeomMesh> m_mesh{};
+    std::vector<std::shared_ptr<Cluster>> m_clusters;
     mutable JointWeights m_weights;
     mutable JointMatrices m_joint_matrices;
 };
@@ -114,21 +113,20 @@ class BlendShape : public Deformer
 using super = Deformer;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
-    span<BlendShapeChannel*> getChannels() const;
-    BlendShapeChannel* createChannel(string_view name);
-    BlendShapeChannel* createChannel(Shape* shape);
+    span<std::shared_ptr<BlendShapeChannel>> getChannels() const;
+	std::shared_ptr<BlendShapeChannel> createChannel(string_view name);
+	std::shared_ptr<BlendShapeChannel> createChannel(std::shared_ptr<Shape> shape);
 
     void deformPoints(span<float3> dst) const override;
     void deformNormals(span<float3> dst) const override;
 
 protected:
-    void importFBXObjects() override;
     void exportFBXObjects() override;
 
-    std::vector<BlendShapeChannel*> m_channels;
+    std::vector<std::shared_ptr<BlendShapeChannel>> m_channels;
 };
 
 
@@ -138,7 +136,7 @@ using super = SubDeformer;
 public:
     struct ShapeData
     {
-        Shape* shape;
+		std::shared_ptr<Shape> shape;
         float weight;
     };
 
@@ -147,7 +145,7 @@ public:
     float getWeight() const;
     span<ShapeData> getShapeData() const;
     // weight: 0.0f - 1.0f
-    void addShape(Shape* shape, float weight = 1.0f);
+    void addShape(std::shared_ptr<Shape> shape, float weight = 1.0f);
 
     void setWeight(float v);
     void deformPoints(span<float3> dst) const;
@@ -179,14 +177,14 @@ using super = Pose;
 public:
     struct PoseData
     {
-        Model* object;
+		std::shared_ptr<Model> object;
         float4x4 matrix;
     };
 
     ObjectSubClass getSubClass() const override;
 
     span<PoseData> getPoseData() const;
-    void addPoseData(Model* joint, float4x4 bind_matrix);
+    void addPoseData(std::shared_ptr<Model> joint, float4x4 bind_matrix);
 
 protected:
     void importFBXObjects() override;

@@ -19,6 +19,8 @@
 
 #include "../graphics/opengl/gl_mesh.h"
 #include "../graphics/post_processing.h"
+
+#include "utility.h"
 namespace anim
 {
 SharedResources::SharedResources()
@@ -83,12 +85,22 @@ void SharedResources::add_entity(std::shared_ptr<Model> &model, const char *path
 	}
 	std::shared_ptr<Entity> entity = nullptr;
 	convert_to_entity(entity, model, model->get_root_node(), nullptr, 0, nullptr);
+	
 	if (entity)
 	{
 		entity->set_name(model->get_name());
 		
 		model_path_[entity->get_id()] = std::string(path);
 		root_entity_->add_children(entity);
+		
+		
+		auto [t, r, s] = DecomposeTransform(entity->get_local());
+		
+		s *= 100.0f;
+		
+		auto transformation = ComposeTransform(t, r, s);
+
+		entity->set_local(transformation);
 	}
 }
 void SharedResources::add_animations(const std::vector<std::shared_ptr<Animation>> &animations)

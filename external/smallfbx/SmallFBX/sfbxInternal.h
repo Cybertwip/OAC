@@ -185,11 +185,16 @@ template<class Cont>
 inline auto FindObjectByName(const Cont& objects, string_view name)
 {
     if (IsFullName(name))
-        return get_raw_ptr(find_if(objects, [&name](const auto& p) { return p->getFullName() == name; }));
+        return find_if(objects, [&name](const auto& p) { return p->getFullName() == name; });
     else
-        return get_raw_ptr(find_if(objects, [&name](const auto& p) { return p->getName() == name; }));
+        return find_if(objects, [&name](const auto& p) { return p->getName() == name; });
 }
 
+template<class Cont>
+inline auto FindObjectById(const Cont& objects, int64 id)
+{
+	return find_if(objects, [&id](const auto& p) { return p->getID() == id; });
+}
 
 class CounterStream : public std::ostream
 {

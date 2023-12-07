@@ -8,9 +8,9 @@ namespace sfbx {
 
 ObjectClass Deformer::getClass() const { return ObjectClass::Deformer; }
 
-GeomMesh* Deformer::getBaseMesh() const
+std::shared_ptr<GeomMesh> Deformer::getBaseMesh() const
 {
-    for (auto* p = getParent(); p; p = p->getParent())
+    for (auto p = getParent(); p; p = p->getParent())
         if (auto geom = as<GeomMesh>(p))
             return geom;
     return nullptr;
@@ -25,11 +25,6 @@ ObjectClass SubDeformer::getClass() const { return ObjectClass::Deformer; }
 
 ObjectSubClass Skin::getSubClass() const { return ObjectSubClass::Skin; }
 
-void Skin::importFBXObjects()
-{
-    super::importFBXObjects();
-}
-
 void Skin::exportFBXObjects()
 {
     super::exportFBXObjects();
@@ -40,14 +35,14 @@ void Skin::exportFBXObjects()
     n->createChild(sfbxS_SkinningType, sfbxS_Linear);
 }
 
-void Skin::addParent(Object* v)
+void Skin::addParent(ObjectPtr v)
 {
     super::addParent(v);
     if (auto mesh = as<GeomMesh>(v))
         m_mesh = mesh;
 }
 
-void Skin::addChild(Object* v)
+void Skin::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto cluster = as<Cluster>(v)) {
@@ -59,15 +54,15 @@ void Skin::addChild(Object* v)
     }
 }
 
-void Skin::eraseChild(Object* v)
+void Skin::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto cluster = as<Cluster>(v))
         erase(m_clusters, cluster);
 }
 
-GeomMesh* Skin::getMesh() const { return m_mesh; }
-span<Cluster*> Skin::getClusters() const { return make_span(m_clusters); }
+std::shared_ptr<GeomMesh> Skin::getMesh() const { return m_mesh; }
+span<std::shared_ptr<Cluster>> Skin::getClusters() const { return make_span(m_clusters); }
 
 const JointWeights& Skin::getJointWeights() const
 {
@@ -201,7 +196,7 @@ const JointMatrices& Skin::getJointMatrices() const
 }
 
 
-Cluster* Skin::createCluster(Model* joint)
+std::shared_ptr<Cluster> Skin::createCluster(std::shared_ptr<Model> joint)
 {
     if (!joint)
         return nullptr;
@@ -231,8 +226,6 @@ ObjectSubClass Cluster::getSubClass() const { return ObjectSubClass::Cluster; }
 
 void Cluster::importFBXObjects()
 {
-    super::importFBXObjects();
-
     auto n = getNode();
     GetChildPropertyValue<int>(m_indices, n, sfbxS_Indexes);
     GetChildPropertyValue<float64>(m_weights, n, sfbxS_Weights);
@@ -273,11 +266,6 @@ void Cluster::setBindMatrix(float4x4 v)
 
 ObjectSubClass BlendShape::getSubClass() const { return ObjectSubClass::BlendShape; }
 
-void BlendShape::importFBXObjects()
-{
-    super::importFBXObjects();
-}
-
 void BlendShape::exportFBXObjects()
 {
     super::exportFBXObjects();
@@ -286,31 +274,31 @@ void BlendShape::exportFBXObjects()
     n->createChild(sfbxS_Version, sfbxI_BlendShapeVersion);
 }
 
-void BlendShape::addChild(Object* v)
+void BlendShape::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto ch = as<BlendShapeChannel>(v))
         m_channels.push_back(ch);
 }
 
-void BlendShape::eraseChild(Object* v)
+void BlendShape::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto ch = as<BlendShapeChannel>(v))
         erase(m_channels, ch);
 }
 
-span<BlendShapeChannel*> BlendShape::getChannels() const
+span<std::shared_ptr<BlendShapeChannel>> BlendShape::getChannels() const
 {
     return make_span(m_channels);
 }
 
-BlendShapeChannel* BlendShape::createChannel(string_view name)
+std::shared_ptr<BlendShapeChannel> BlendShape::createChannel(string_view name)
 {
     return createChild<BlendShapeChannel>(name);
 }
 
-BlendShapeChannel* BlendShape::createChannel(Shape* shape)
+std::shared_ptr<BlendShapeChannel> BlendShape::createChannel(std::shared_ptr<Shape> shape)
 {
     if (!shape)
         return nullptr;
@@ -336,8 +324,6 @@ ObjectSubClass BlendShapeChannel::getSubClass() const { return ObjectSubClass::B
 
 void BlendShapeChannel::importFBXObjects()
 {
-    super::importFBXObjects();
-
     for (auto c : getChildren()) {
         if (auto shape = as<Shape>(c))
             m_shape_data.push_back({ shape, 1.0f });
@@ -378,7 +364,7 @@ span<BlendShapeChannel::ShapeData> BlendShapeChannel::getShapeData() const
     return make_span(m_shape_data);
 }
 
-void BlendShapeChannel::addShape(Shape* shape, float weight)
+void BlendShapeChannel::addShape(std::shared_ptr<Shape> shape, float weight)
 {
     if (shape) {
         addChild(shape);
@@ -437,8 +423,6 @@ ObjectSubClass BindPose::getSubClass() const { return ObjectSubClass::BindPose; 
 
 void BindPose::importFBXObjects()
 {
-    super::importFBXObjects();
-
     for (auto n : getNode()->getChildren()) {
         if (n->getName() == sfbxS_PoseNode) {
             auto nid = GetChildPropertyValue<int64>(n, sfbxS_Node);
@@ -465,13 +449,13 @@ void BindPose::exportFBXObjects()
     n->createChild(sfbxS_NbPoseNodes, (int32)m_pose_data.size());
     for (auto& d : m_pose_data) {
         auto pn = n->createChild(sfbxS_PoseNode);
-        pn->createChild(sfbxS_Node, (int64)d.object);
+        pn->createChild(sfbxS_Node, (int64)d.object.get());
         pn->createChild(sfbxS_Matrix, (double4x4)d.matrix);
     }
 }
 
 span<BindPose::PoseData> BindPose::getPoseData() const { return make_span(m_pose_data); }
-void BindPose::addPoseData(Model* joint, float4x4 bind_matrix) {
+void BindPose::addPoseData(std::shared_ptr<Model> joint, float4x4 bind_matrix) {
 	m_pose_data.push_back({ joint, bind_matrix }); }
 
 } // namespace sfbx

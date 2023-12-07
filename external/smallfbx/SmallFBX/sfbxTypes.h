@@ -369,6 +369,6 @@ class Object; using ObjectPtr = std::shared_ptr<Object>;
 class Document; using DocumentPtr = std::shared_ptr<Document>;
 
 template<class T, class U>
-inline T* as(U* v) { return dynamic_cast<T*>(v); }
+inline std::shared_ptr<T> as(U v) { return std::dynamic_pointer_cast<T>(v); }
 
 } // namespace sfbx

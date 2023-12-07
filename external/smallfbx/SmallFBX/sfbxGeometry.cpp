@@ -8,21 +8,21 @@ namespace sfbx {
 
 ObjectClass Geometry::getClass() const { return ObjectClass::Geometry; }
 
-void Geometry::addChild(Object* v)
+void Geometry::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto deformer = as<Deformer>(v))
         m_deformers.push_back(deformer);
 }
 
-void Geometry::eraseChild(Object* v)
+void Geometry::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto deformer = as<Deformer>(v))
         erase(m_deformers, deformer);
 }
 
-Model* Geometry::getModel() const
+std::shared_ptr<Model> Geometry::getModel() const
 {
     for (auto p : m_parents)
         if (auto model = as<Model>(p))
@@ -43,19 +43,19 @@ bool Geometry::hasSkinDeformer() const
     return false;
 }
 
-span<Deformer*> Geometry::getDeformers() const
+span<std::shared_ptr<Deformer>> Geometry::getDeformers() const
 {
     return make_span(m_deformers);
 }
 
-template<> Skin* Geometry::createDeformer()
+template<> std::shared_ptr<Skin> Geometry::createDeformer()
 {
     auto ret = createChild<Skin>();
     //ret->setName(getName()); // FBX SDK seems don't do this
     return ret;
 }
 
-template<> BlendShape* Geometry::createDeformer()
+template<> std::shared_ptr<BlendShape> Geometry::createDeformer()
 {
     auto ret = createChild<BlendShape>();
     ret->setName(getName());
@@ -107,8 +107,6 @@ void GeomMesh::checkModes(LayerElement<T>& layer)
 
 void GeomMesh::importFBXObjects()
 {
-    super::importFBXObjects();
-
     for (auto n : getNode()->getChildren()) {
         if (n->getName() == sfbxS_Vertices) {
             // points
@@ -313,7 +311,9 @@ void GeomMesh::exportFBXObjects()
 		
         //TODO add_mapping_and_reference_info+checkModes?
 		
-		add_mapping_and_reference_info(l, layer);
+		
+		l->createChild(sfbxS_MappingInformationType, "AllSame");
+		l->createChild(sfbxS_ReferenceInformationType, "IndexToDirect");
 
 		l->createChild(sfbxS_Materials, layer.data);
     }
@@ -413,8 +413,6 @@ ObjectSubClass Shape::getSubClass() const { return ObjectSubClass::Shape; }
 
 void Shape::importFBXObjects()
 {
-    super::importFBXObjects();
-
     for (auto n : getNode()->getChildren()) {
         auto name = n->getName();
         if (name == sfbxS_Indexes)

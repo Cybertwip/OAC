@@ -90,22 +90,22 @@ public:
     virtual ObjectClass getClass() const;
     virtual ObjectSubClass getSubClass() const;
 
-    template<class T> T* createChild(string_view name = {});
-    virtual void addChild(Object* v);
-    virtual void addChild(Object* v, string_view p);
-    virtual void eraseChild(Object* v);
+    template<class T> std::shared_ptr<T> createChild(string_view name = {});
+    virtual void addChild(ObjectPtr v);
+    virtual void addChild(ObjectPtr v, string_view p);
+    virtual void eraseChild(ObjectPtr v);
 
     int64 getID() const;
     string_view getFullName() const; // display name + class name (e.g. "hoge\x00\x01Mesh")
     string_view getName() const; // display name (e.g. "hoge" if object name is "hoge\x00\x01Mesh")
     Node* getNode() const;
 
-    span<Object*> getParents() const;
-    span<Object*> getChildren() const;
-    Object* getParent(size_t i = 0) const;
-    Object* getChild(size_t i = 0) const;
+    span<ObjectPtr> getParents() const;
+    span<ObjectPtr> getChildren() const;
+	ObjectPtr getParent(size_t i = 0) const;
+	ObjectPtr getChild(size_t i = 0) const;
     const std::string& getChildProp(size_t i = 0) const;
-    Object* findChild(string_view name) const; // name accepts both full name and display name
+	ObjectPtr findChild(string_view name) const; // name accepts both full name and display name
 
     void setID(int64 v);
     void setName(string_view v);
@@ -119,16 +119,16 @@ protected:
     virtual void importFBXObjects();
     virtual void exportFBXObjects();
     virtual void exportFBXConnections();
-    virtual void addParent(Object* v);
-    virtual void eraseParent(Object* v);
+    virtual void addParent(ObjectPtr v);
+    virtual void eraseParent(ObjectPtr v);
 
     Document* m_document{};
     Node* m_node{};
     int64 m_id{};
     std::string m_name;
 
-    std::vector<Object*> m_parents;
-    std::vector<Object*> m_children;
+    std::vector<ObjectPtr> m_parents;
+    std::vector<ObjectPtr> m_children;
     std::vector<std::string> m_child_property_names;
 };
 

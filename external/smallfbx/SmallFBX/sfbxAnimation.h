@@ -39,16 +39,16 @@ class AnimationStack : public Object
 using super = Object;
 public:
     ObjectClass getClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
     float getLocalStart() const;
     float getLocalStop() const;
     float getReferenceStart() const;
     float getReferenceStop() const;
-    span<AnimationLayer*> getAnimationLayers() const;
+    span<std::shared_ptr<AnimationLayer>> getAnimationLayers() const;
 
-    AnimationLayer* createLayer(string_view name = {});
+    std::shared_ptr<AnimationLayer> createLayer(string_view name = {});
 
     void applyAnimation(float time);
 
@@ -64,7 +64,7 @@ protected:
     float m_local_stop{};
     float m_reference_start{};
     float m_reference_stop{};
-    std::vector<AnimationLayer*> m_anim_layers;
+    std::vector<std::shared_ptr<AnimationLayer>> m_anim_layers;
 	
 	friend class Document;
 
@@ -76,23 +76,22 @@ class AnimationLayer : public Object
 using super = Object;
 public:
     ObjectClass getClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
-    span<AnimationCurveNode*> getAnimationCurveNodes() const;
+    span<std::shared_ptr<AnimationCurveNode>> getAnimationCurveNodes() const;
 
-    AnimationCurveNode* createCurveNode(AnimationKind kind, Object* target);
+	std::shared_ptr<AnimationCurveNode> createCurveNode(AnimationKind kind, ObjectPtr target);
 
     void applyAnimation(float time);
 
     bool remap(Document* doc);
-    void merge(AnimationLayer* src);
+    void merge(std::shared_ptr<AnimationLayer> src);
 
 protected:
-    void importFBXObjects() override;
     void exportFBXObjects() override;
 
-    std::vector<AnimationCurveNode*> m_anim_nodes;
+    std::vector<std::shared_ptr<AnimationCurveNode>> m_anim_nodes;
 };
 
 
@@ -101,13 +100,13 @@ class AnimationCurveNode : public Object
 using super = Object;
 public:
     ObjectClass getClass() const override;
-    void addChild(Object* v) override;
-    void addChild(Object* v, string_view p) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void addChild(ObjectPtr v, string_view p) override;
+    void eraseChild(ObjectPtr v) override;
 
     AnimationKind getAnimationKind() const;
-    Object* getAnimationTarget() const;
-    span<AnimationCurve*> getAnimationCurves() const;
+    ObjectPtr getAnimationTarget() const;
+    span<std::shared_ptr<AnimationCurve>> getAnimationCurves() const;
     float getStartTime() const;
     float getStopTime() const;
 
@@ -130,10 +129,10 @@ protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
     void exportFBXConnections() override;
-    void setup(AnimationKind kind, Object* target, bool create_curves);
+    void setup(AnimationKind kind, ObjectPtr target, bool create_curves);
 
     AnimationKind m_kind = AnimationKind::Unknown;
-    std::vector<AnimationCurve*> m_curves;
+    std::vector<std::shared_ptr<AnimationCurve>> m_curves;
 
     union {
         Object* object;

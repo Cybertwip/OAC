@@ -67,10 +67,10 @@ class Model : public Object
 using super = Object;
 public:
     ObjectClass getClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
-    Model* getParentModel() const;
+    std::shared_ptr<Model> getParentModel() const;
 
     bool getVisibility() const;
     RotationOrder getRotationOrder() const;
@@ -94,13 +94,13 @@ public:
 protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
-    void addParent(Object* v) override;
-    void eraseParent(Object* v) override;
+    void addParent(ObjectPtr v) override;
+    void eraseParent(ObjectPtr v) override;
     void propagateDirty();
     void updateMatrices() const;
 
-    Model* m_parent_model{};
-    std::vector<Model*> m_child_models;
+    std::shared_ptr<Model> m_parent_model{};
+    std::vector<std::shared_ptr<Model>> m_child_models;
 
     bool m_visibility = true;
     RotationOrder m_rotation_order = RotationOrder::XYZ;
@@ -124,13 +124,13 @@ class Null : public Model
 using super = Model;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
 protected:
     void exportFBXObjects() override;
 
-    NullAttribute* m_attr{};
+    std::shared_ptr<NullAttribute> m_attr{};
 };
 
 class Root : public Model
@@ -138,13 +138,13 @@ class Root : public Model
 using super = Model;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
 protected:
     void exportFBXObjects() override;
 
-    RootAttribute* m_attr{};
+    std::shared_ptr<RootAttribute> m_attr{};
 };
 
 class LimbNode : public Model
@@ -152,13 +152,13 @@ class LimbNode : public Model
 using super = Model;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
 protected:
     void exportFBXObjects() override;
 
-    LimbNodeAttribute* m_attr{};
+	std::shared_ptr<LimbNodeAttribute> m_attr{};
 };
 
 
@@ -170,18 +170,18 @@ class Mesh : public Model
 using super = Model;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
-    GeomMesh* getGeometry();
-    span<Material*> getMaterials() const;
+	std::shared_ptr<GeomMesh> getGeometry();
+    span<std::shared_ptr<Material>> getMaterials() const;
 
 protected:
     void importFBXObjects() override;
 	void exportFBXObjects() override;
 
-    GeomMesh* m_geom{};
-    std::vector<Material*> m_materials;
+	std::shared_ptr<GeomMesh> m_geom{};
+    std::vector<std::shared_ptr<Material>> m_materials;
 };
 
 
@@ -197,8 +197,8 @@ class Light : public Model
 using super = Model;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
     LightType getLightType() const;
     float3 getColor() const;
@@ -214,10 +214,9 @@ public:
 
 protected:
     friend class LightAttribute;
-    void importFBXObjects() override;
     void exportFBXObjects() override;
 
-    LightAttribute* m_attr{};
+	std::shared_ptr<LightAttribute> m_attr{};
     LightType m_light_type = LightType::Point;
     float3 m_color = float3::one();
     float m_intensity = 1.0f;
@@ -237,8 +236,8 @@ class Camera : public Model
 using super = Model;
 public:
     ObjectSubClass getSubClass() const override;
-    void addChild(Object* v) override;
-    void eraseChild(Object* v) override;
+    void addChild(ObjectPtr v) override;
+    void eraseChild(ObjectPtr v) override;
 
     CameraType getCameraType() const;
     float getFocalLength() const;   // in mm
@@ -270,7 +269,7 @@ protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
 
-    CameraAttribute* m_attr{};
+	std::shared_ptr<CameraAttribute> m_attr{};
     CameraType m_camera_type = CameraType::Perspective;
     float m_focal_length = 50.0f; // in mm
     float2 m_film_size{ 36.0f, 24.0f }; // in mm

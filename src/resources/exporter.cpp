@@ -133,7 +133,7 @@ namespace anim
         auto animation = animation_comp->get_mutable_animation();
 		auto stacks = doc->getAnimationStacks();
 		
-		std::vector<sfbx::AnimationCurveNode*> curveNodes;
+		std::vector<std::shared_ptr<sfbx::AnimationCurveNode>> curveNodes;
 		for(auto& stack : stacks){
 			for(auto& layer : stack->getAnimationLayers()){
 				for(auto& node : layer->getAnimationCurveNodes()){
@@ -150,14 +150,13 @@ namespace anim
 		for(auto& stack : stacks){
 			doc->eraseObject(stack);
 		}
-
 		
-		sfbx::AnimationStack* take = doc->createObject<sfbx::AnimationStack>("take");
-		sfbx::AnimationLayer* layer = take->createLayer("deform");
+		std::shared_ptr<sfbx::AnimationStack> take = doc->createObject<sfbx::AnimationStack>("take");
+		std::shared_ptr<sfbx::AnimationLayer> layer = take->createLayer("deform");
 		
 		doc->setCurrentTake(take);
 
-		animation->get_fbx_animation(doc, layer,  animation_comp->get_ticks_per_second_factor(), is_linear_);
+		animation->get_fbx_animation(doc, layer.get(),  animation_comp->get_ticks_per_second_factor(), is_linear_);
 		
         auto save = std::filesystem::u8path(save_path);
         std::string ext = save.extension().string();
@@ -172,6 +171,8 @@ namespace anim
         LOG(std::string(save_path) + ": " + ext);
 		
 		doc->exportFBXNodes();
+		
+		doc->writeAscii(output_path + ".ascii.fbx");
 		
         if (!doc->writeBinary(output_path))
         {

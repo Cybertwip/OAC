@@ -18,7 +18,6 @@ ObjectClass Model::getClass() const { return ObjectClass::Model; }
 
 void Model::importFBXObjects()
 {
-    super::importFBXObjects();
     auto n = getNode();
     if (!n)
         return;
@@ -125,35 +124,35 @@ void Model::exportFBXObjects()
             sfbxS_LclScale, sfbxS_LclScale, sfbxS_Empty, sfbxS_A, sfbxVector3d(m_scale));
 }
 
-void Model::addChild(Object* v)
+void Model::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto model = as<Model>(v))
         m_child_models.push_back(model);
 }
 
-void Model::eraseChild(Object* v)
+void Model::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto model = as<Model>(v))
         erase(m_child_models, model);
 }
 
-void Model::addParent(Object* v)
+void Model::addParent(ObjectPtr v)
 {
     super::addParent(v);
     if (auto model = as<Model>(v))
         m_parent_model = model;
 }
 
-void Model::eraseParent(Object* v)
+void Model::eraseParent(ObjectPtr v)
 {
     super::eraseParent(v);
     if (v == m_parent_model)
         m_parent_model = nullptr;
 }
 
-Model* Model::getParentModel() const { return m_parent_model; }
+std::shared_ptr<Model> Model::getParentModel() const { return m_parent_model; }
 
 bool Model::getVisibility() const { return m_visibility; }
 RotationOrder Model::getRotationOrder() const { return m_rotation_order; }
@@ -252,14 +251,14 @@ void NullAttribute::exportFBXObjects()
     getNode()->createChild(sfbxS_TypeFlags, sfbxS_Null);
 }
 
-void Null::addChild(Object* v)
+void Null::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto attr = as<NullAttribute>(v))
         m_attr = attr;
 }
 
-void Null::eraseChild(Object* v)
+void Null::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (v == m_attr)
@@ -283,14 +282,14 @@ void RootAttribute::exportFBXObjects()
     getNode()->createChild(sfbxS_TypeFlags, sfbxS_Null, sfbxS_Skeleton, sfbxS_Root);
 }
 
-void Root::addChild(Object* v)
+void Root::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto attr = as<RootAttribute>(v))
         m_attr = attr;
 }
 
-void Root::eraseChild(Object* v)
+void Root::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (v == m_attr)
@@ -314,7 +313,7 @@ void LimbNodeAttribute::exportFBXObjects()
     getNode()->createChild(sfbxS_TypeFlags, sfbxS_Skeleton);
 }
 
-void LimbNode::addChild(Object* v)
+void LimbNode::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto attr = as<LimbNodeAttribute>(v))
@@ -322,7 +321,7 @@ void LimbNode::addChild(Object* v)
 }
 
 
-void LimbNode::eraseChild(Object* v)
+void LimbNode::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (v == m_attr)
@@ -335,8 +334,6 @@ ObjectSubClass Mesh::getSubClass() const { return ObjectSubClass::Mesh; }
 
 void Mesh::importFBXObjects()
 {
-    super::importFBXObjects();
-
 #ifdef sfbxEnableLegacyFormatSupport
     // in old fbx, Model::Mesh has geometry data (Geometry::Mesh does not exist)
     auto n = getNode();
@@ -349,11 +346,9 @@ void Mesh::importFBXObjects()
 void Mesh::exportFBXObjects()
 {
 	super::exportFBXObjects();
-	
-	
 }
 
-void Mesh::addChild(Object* v)
+void Mesh::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto geom = as<GeomMesh>(v))
@@ -362,7 +357,7 @@ void Mesh::addChild(Object* v)
         m_materials.push_back(material);
 }
 
-void Mesh::eraseChild(Object* v)
+void Mesh::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (v == m_geom)
@@ -371,14 +366,14 @@ void Mesh::eraseChild(Object* v)
         erase(m_materials, material);
 }
 
-GeomMesh* Mesh::getGeometry()
+std::shared_ptr<GeomMesh> Mesh::getGeometry()
 {
     if (!m_geom)
         m_geom = createChild<GeomMesh>(getName());
     return m_geom;
 }
 
-span<Material*> Mesh::getMaterials() const
+span<std::shared_ptr<Material>> Mesh::getMaterials() const
 {
     return make_span(m_materials);
 }
@@ -387,15 +382,8 @@ span<Material*> Mesh::getMaterials() const
 
 ObjectSubClass Light::getSubClass() const { return ObjectSubClass::Light; }
 
-void Light::importFBXObjects()
-{
-    super::importFBXObjects();
-}
-
 void LightAttribute::importFBXObjects()
 {
-    super::importFBXObjects();
-
     auto light = as<Light>(getParent());
     if (!light)
         return;
@@ -444,14 +432,14 @@ void LightAttribute::exportFBXObjects()
     }
 }
 
-void Light::addChild(Object* v)
+void Light::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto attr = as<LightAttribute>(v))
         m_attr = attr;
 }
 
-void Light::eraseChild(Object* v)
+void Light::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (v == m_attr)
@@ -476,14 +464,14 @@ ObjectSubClass Camera::getSubClass() const { return ObjectSubClass::Camera; }
 
 void Camera::importFBXObjects()
 {
-    super::importFBXObjects();
+    
     if (m_target_position != float3::zero())
         m_target_position = m_target_position - getPosition();
 }
 
 void CameraAttribute::importFBXObjects()
 {
-    super::importFBXObjects();
+    
 
     auto cam = as<Camera>(getParent());
     if (!cam)
@@ -565,14 +553,14 @@ void CameraAttribute::exportFBXObjects()
     props->createChild(sfbxS_P, sfbxS_FarPlane, sfbxS_Number, "", "A", (float64)cam->m_far_plane);
 }
 
-void Camera::addChild(Object* v)
+void Camera::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto attr = as<CameraAttribute>(v))
         m_attr = attr;
 }
 
-void Camera::eraseChild(Object* v)
+void Camera::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (v == m_attr)

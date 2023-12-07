@@ -193,18 +193,18 @@ void Object::exportFBXObjects()
 void Object::exportFBXConnections()
 {
     for (auto parent : getParents())
-        m_document->createLinkOO(this, parent);
+        m_document->createLinkOO(shared_from_this(), parent);
 }
 
-void Object::addChild(Object* v)
+void Object::addChild(ObjectPtr v)
 {
     if (v) {
         m_children.push_back(v);
         m_child_property_names.emplace_back();
-        v->addParent(this);
+        v->addParent(shared_from_this());
     }
 }
-void Object::addChild(Object* v, string_view p)
+void Object::addChild(ObjectPtr v, string_view p)
 {
     addChild(v);
     if (v) {
@@ -212,20 +212,20 @@ void Object::addChild(Object* v, string_view p)
     }
 }
 
-void Object::eraseChild(Object* v)
+void Object::eraseChild(ObjectPtr v)
 {
     //TODO m_child_property_names
     if (erase(m_children, v))
-        v->eraseParent(this);
+        v->eraseParent(shared_from_this());
 }
 
-void Object::addParent(Object* v)
+void Object::addParent(ObjectPtr v)
 {
     if (v)
         m_parents.push_back(v);
 }
 
-void Object::eraseParent(Object* v)
+void Object::eraseParent(ObjectPtr v)
 {
     erase(m_parents, v);
 }
@@ -236,18 +236,18 @@ string_view Object::getFullName() const { return m_name; }
 string_view Object::getName() const { return m_name.c_str(); }
 Node* Object::getNode() const { return m_node; }
 
-span<Object*> Object::getParents() const  { return make_span(m_parents); }
-span<Object*> Object::getChildren() const { return make_span(m_children); }
-Object* Object::getParent(size_t i) const { return i < m_parents.size() ? m_parents[i] : nullptr; }
-Object* Object::getChild(size_t i) const  { return i < m_children.size() ? m_children[i] : nullptr; }
+span<ObjectPtr> Object::getParents() const  { return make_span(m_parents); }
+span<ObjectPtr> Object::getChildren() const { return make_span(m_children); }
+ObjectPtr Object::getParent(size_t i) const { return i < m_parents.size() ? m_parents[i] : nullptr; }
+ObjectPtr Object::getChild(size_t i) const  { return i < m_children.size() ? m_children[i] : nullptr; }
 const std::string& Object::getChildProp(size_t i) const { static std::string nulls; return i < m_child_property_names.size() ? m_child_property_names[i] : nulls; }
 
-Object* Object::findChild(string_view name) const
+ObjectPtr Object::findChild(string_view name) const
 {
     if (IsFullName(name))
-        return find_if(m_children, [&name](Object* c) { return c->getFullName() == name; });
+        return find_if(m_children, [&name](ObjectPtr c) { return c->getFullName() == name; });
     else
-        return find_if(m_children, [&name](Object* c) { return c->getName() == name; });
+        return find_if(m_children, [&name](ObjectPtr c) { return c->getName() == name; });
     return nullptr;
 }
 

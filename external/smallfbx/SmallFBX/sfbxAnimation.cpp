@@ -12,7 +12,7 @@ ObjectClass AnimationStack::getClass() const { return ObjectClass::AnimationStac
 
 void AnimationStack::importFBXObjects()
 {
-    super::importFBXObjects();
+    
 
     EnumerateProperties(getNode(), [this](Node* p) {
         auto name = GetPropertyString(p, 0);
@@ -33,8 +33,8 @@ void AnimationStack::exportFBXObjects()
 
     float start{}, stop{};
     bool first = true;
-    for (auto* layer : getAnimationLayers()) {
-        for (auto* node : layer->getAnimationCurveNodes()) {
+    for (auto layer : getAnimationLayers()) {
+        for (auto node : layer->getAnimationCurveNodes()) {
             if (first) {
                 start = node->getStartTime();
                 stop = node->getStopTime();
@@ -59,14 +59,14 @@ void AnimationStack::exportFBXObjects()
         props->createChild(sfbxS_P, sfbxS_ReferenceStop, sfbxS_KTime, sfbxS_Time, "", ToTicks(m_reference_stop));
 }
 
-void AnimationStack::addChild(Object* v)
+void AnimationStack::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto l = as<AnimationLayer>(v))
         m_anim_layers.push_back(l);
 }
 
-void AnimationStack::eraseChild(Object* v)
+void AnimationStack::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto l = as<AnimationLayer>(v))
@@ -77,9 +77,9 @@ float AnimationStack::getLocalStart() const { return m_local_start; }
 float AnimationStack::getLocalStop() const { return m_local_stop; }
 float AnimationStack::getReferenceStart() const { return m_reference_start; }
 float AnimationStack::getReferenceStop() const { return m_reference_stop; }
-span<AnimationLayer*> AnimationStack::getAnimationLayers() const { return m_anim_layers; }
+span<std::shared_ptr<AnimationLayer>> AnimationStack::getAnimationLayers() const { return m_anim_layers; }
 
-AnimationLayer* AnimationStack::createLayer(string_view name)
+std::shared_ptr<AnimationLayer> AnimationStack::createLayer(string_view name)
 {
     return createChild<AnimationLayer>(name);
 }
@@ -100,7 +100,7 @@ bool AnimationStack::remap(Document* doc)
     if (m_anim_layers.empty())
         return false;
 
-    AnimationStack* dst = this;
+	std::shared_ptr<AnimationStack> dst = as<AnimationStack>(shared_from_this());
     if (auto s = doc->findAnimationStack(getFullName())) {
         s->merge(this);
         dst = s;
@@ -133,36 +133,31 @@ void AnimationStack::merge(AnimationStack* src)
 
 ObjectClass AnimationLayer::getClass() const { return ObjectClass::AnimationLayer; }
 
-void AnimationLayer::importFBXObjects()
-{
-    super::importFBXObjects();
-}
-
 void AnimationLayer::exportFBXObjects()
 {
     super::exportFBXObjects();
 }
 
-void AnimationLayer::addChild(Object* v)
+void AnimationLayer::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto acn = as<AnimationCurveNode>(v))
         m_anim_nodes.push_back(acn);
 }
 
-void AnimationLayer::eraseChild(Object* v)
+void AnimationLayer::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto acn = as<AnimationCurveNode>(v))
         erase(m_anim_nodes, acn);
 }
 
-span<AnimationCurveNode*> AnimationLayer::getAnimationCurveNodes() const
+span<std::shared_ptr<AnimationCurveNode>> AnimationLayer::getAnimationCurveNodes() const
 {
     return make_span(m_anim_nodes);
 }
 
-AnimationCurveNode* AnimationLayer::createCurveNode(AnimationKind kind, Object* target)
+std::shared_ptr<AnimationCurveNode> AnimationLayer::createCurveNode(AnimationKind kind, ObjectPtr target)
 {
     auto ret = createChild<AnimationCurveNode>();
     ret->setup(kind, target, true);
@@ -187,7 +182,7 @@ bool AnimationLayer::remap(Document* doc)
     return !m_anim_nodes.empty();
 }
 
-void AnimationLayer::merge(AnimationLayer* src)
+void AnimationLayer::merge(std::shared_ptr<AnimationLayer> src)
 {
     // make_reverse because elements maybe erased in the loop
     for (auto node : make_reverse(src->getAnimationCurveNodes())) {
@@ -315,7 +310,7 @@ ObjectClass AnimationCurveNode::getClass() const { return ObjectClass::Animation
 
 void AnimationCurveNode::importFBXObjects()
 {
-    super::importFBXObjects();
+    
 
     auto name = getName();
     if (auto aki = FindAnimationKindInfo(name)) {
@@ -352,25 +347,25 @@ void AnimationCurveNode::exportFBXConnections()
     // ignore super::constructLinks()
 	for(auto& parent : getParents()){
 		if(auto layer = sfbx::as<sfbx::AnimationLayer>(parent)){
-			m_document->createLinkOO(this, layer);
+			m_document->createLinkOO(shared_from_this(), layer);
 		}
 	}
     if (auto* info = FindAnimationKindInfo(m_kind)) {
-        if (auto* target = getAnimationTarget())
-            m_document->createLinkOP(this, target, info->link_name);
+        if (auto target = getAnimationTarget())
+            m_document->createLinkOP(shared_from_this(), target, info->link_name);
         for (auto curve : m_curves)
-            m_document->createLinkOP(curve, this, curve->m_link_name);
+            m_document->createLinkOP(curve, shared_from_this(), curve->m_link_name);
     }
 }
 
-void AnimationCurveNode::addChild(Object* v)
+void AnimationCurveNode::addChild(ObjectPtr v)
 {
     super::addChild(v);
     if (auto curve = as<AnimationCurve>(v))
         m_curves.push_back(curve);
 }
 
-void AnimationCurveNode::addChild(Object* v, string_view p)
+void AnimationCurveNode::addChild(ObjectPtr v, string_view p)
 {
     super::addChild(v, p);
     if (auto curve = as<AnimationCurve>(v)) {
@@ -382,7 +377,7 @@ void AnimationCurveNode::addChild(Object* v, string_view p)
     }
 }
 
-void AnimationCurveNode::eraseChild(Object* v)
+void AnimationCurveNode::eraseChild(ObjectPtr v)
 {
     super::eraseChild(v);
     if (auto curve = as<AnimationCurve>(v))
@@ -394,7 +389,7 @@ AnimationKind AnimationCurveNode::getAnimationKind() const
     return m_kind;
 }
 
-Object* AnimationCurveNode::getAnimationTarget() const
+ObjectPtr AnimationCurveNode::getAnimationTarget() const
 {
     for (auto p : getParents()) 
         if (!as<AnimationLayer>(p))
@@ -402,7 +397,7 @@ Object* AnimationCurveNode::getAnimationTarget() const
     return nullptr;
 }
 
-span<AnimationCurve*> AnimationCurveNode::getAnimationCurves() const
+span<std::shared_ptr<AnimationCurve>> AnimationCurveNode::getAnimationCurves() const
 {
     return make_span(m_curves);
 }
@@ -507,7 +502,7 @@ void AnimationCurveNode::applyAnimation(float time) const
     }
 }
 
-void AnimationCurveNode::setup(AnimationKind kind, Object* target, bool create_curves)
+void AnimationCurveNode::setup(AnimationKind kind, ObjectPtr target, bool create_curves)
 {
     // cache typed target object.
     // assume target objects won't be erased or changed except remap().
@@ -515,18 +510,18 @@ void AnimationCurveNode::setup(AnimationKind kind, Object* target, bool create_c
 
     m_target.object = nullptr;
     if (kind >= AnimationKind::Position && kind <= AnimationKind::Scale) { // transform
-        m_target.model = as<Model>(target);
+        m_target.model = as<Model>(target).get();
     }
     else if (kind >= AnimationKind::Color && kind <= AnimationKind::Intensity) { // light
         if (auto attr = as<LightAttribute>(target))
-            m_target.light = as<Light>(attr->getParent());
+            m_target.light = as<Light>(attr->getParent()).get();
     }
     else if (kind >= AnimationKind::FocalLength && kind <= AnimationKind::FilmOffsetY) { // camera
         if (auto attr = as<CameraAttribute>(target))
-            m_target.camera = as<Camera>(attr->getParent());
+            m_target.camera = as<Camera>(attr->getParent()).get();
     }
     else if (kind == AnimationKind::DeformWeight) { // blend shape channel
-        m_target.bs_channel = as<BlendShapeChannel>(target);
+        m_target.bs_channel = as<BlendShapeChannel>(target).get();
     }
 
     auto* acd = FindAnimationKindInfo(kind);
@@ -536,7 +531,7 @@ void AnimationCurveNode::setup(AnimationKind kind, Object* target, bool create_c
 
     m_kind = kind;
     setName(acd->object_name);
-    target->addChild(this);
+    target->addChild(shared_from_this());
 
     if (create_curves) {
         for (auto& link_name : acd->curve_names) {
@@ -573,8 +568,8 @@ bool AnimationCurveNode::remap(Document* doc)
     for (auto& p : getParents()) {
         if (!as<AnimationLayer>(p)) {
             if (auto np = doc->findObject(p->getFullName())) {
-                p->eraseChild(this); // erase p from m_parents. so, this loop is invalidated
-                np->addChild(this);
+                p->eraseChild(shared_from_this()); // erase p from m_parents. so, this loop is invalidated
+                np->addChild(shared_from_this());
                 setup(m_kind, np, false);
                 return true;
             }
@@ -586,14 +581,14 @@ bool AnimationCurveNode::remap(Document* doc)
 void AnimationCurveNode::unlink()
 {
     while (!m_parents.empty())
-        m_parents.back()->eraseChild(this);
+        m_parents.back()->eraseChild(shared_from_this());
 
     while (!m_curves.empty()) {
         auto c = m_curves.back();
         eraseChild(c);
         m_document->eraseObject(c);
     }
-    m_document->eraseObject(this);
+    m_document->eraseObject(shared_from_this());
 }
 
 
@@ -601,7 +596,7 @@ ObjectClass AnimationCurve::getClass() const { return ObjectClass::AnimationCurv
 
 void AnimationCurve::importFBXObjects()
 {
-    super::importFBXObjects();
+    
 
     for (auto n : getNode()->getChildren()) {
         auto name = n->getName();

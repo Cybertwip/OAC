@@ -41,9 +41,9 @@ void FbxAnimation::init_animation(const aiAnimation *animation, const aiScene *s
 	
 	auto animationLayer = doc->getAnimationStacks()[0]->getAnimationLayers()[0];
 	
-	process_bones(animationLayer, doc->getRootModel());
+	process_bones(animationLayer.get(), doc->getRootModel().get());
 
-	process_bindpose(doc->getRootModel());
+	process_bindpose(doc->getRootModel().get());
 //
 //
 //	process_bones(animation, scene->mRootNode);
@@ -78,33 +78,50 @@ void FbxAnimation::process_bones(const sfbx::AnimationLayer *animation, sfbx::Mo
 {
 	auto curveNodes = animation->getAnimationCurveNodes();
 	
-	auto rotationCondition = [&curveNodes, &node](const sfbx::AnimationCurveNode* curveNode) {
-		return curveNode->getAnimationKind() == sfbx::AnimationKind::Rotation && curveNode->getAnimationTarget() == node;
+	auto rotationCondition = [&curveNodes, &node](const std::shared_ptr<sfbx::AnimationCurveNode> curveNode) {
+		return curveNode->getAnimationKind() == sfbx::AnimationKind::Rotation && curveNode->getAnimationTarget().get() == node;
 	};
 
-	auto positionCondition = [&curveNodes, &node](const sfbx::AnimationCurveNode* curveNode) {
-		return curveNode->getAnimationKind() == sfbx::AnimationKind::Position && curveNode->getAnimationTarget() == node;
+	auto positionCondition = [&curveNodes, &node](const std::shared_ptr<sfbx::AnimationCurveNode> curveNode) {
+		return curveNode->getAnimationKind() == sfbx::AnimationKind::Position && curveNode->getAnimationTarget().get() == node;
 	};
 	
-	auto scaleCondition = [&curveNodes, &node](const sfbx::AnimationCurveNode* curveNode) {
-		return curveNode->getAnimationKind() == sfbx::AnimationKind::Scale && curveNode->getAnimationTarget() == node;
+	auto scaleCondition = [&curveNodes, &node](const std::shared_ptr<sfbx::AnimationCurveNode> curveNode) {
+		return curveNode->getAnimationKind() == sfbx::AnimationKind::Scale && curveNode->getAnimationTarget().get() == node;
 	};
 
-	sfbx::AnimationCurveNode* positionCurve = *std::find_if(curveNodes.begin(), curveNodes.end(), positionCondition);
+	auto positionCurveIter = std::find_if(curveNodes.begin(), curveNodes.end(), positionCondition);
 
-	sfbx::AnimationCurveNode* rotationCurve = *std::find_if(curveNodes.begin(), curveNodes.end(), rotationCondition);
+	auto rotationCurveIter = std::find_if(curveNodes.begin(), curveNodes.end(), rotationCondition);
 
-	sfbx::AnimationCurveNode* scaleCurve = *std::find_if(curveNodes.begin(), curveNodes.end(), scaleCondition);
+	auto scaleCurveIter = std::find_if(curveNodes.begin(), curveNodes.end(), scaleCondition);
 
+	std::shared_ptr<sfbx::AnimationCurveNode> positionCurve = nullptr;
+	std::shared_ptr<sfbx::AnimationCurveNode> rotationCurve = nullptr;
+	std::shared_ptr<sfbx::AnimationCurveNode> scaleCurve = nullptr;
+	
+	
+	if(positionCurveIter != curveNodes.end()){
+		positionCurve = *positionCurveIter;
+	}
+	
+	if(rotationCurveIter != curveNodes.end()){
+		rotationCurve = *rotationCurveIter;
+	}
+	
+	if(scaleCurveIter != curveNodes.end()){
+		scaleCurve = *scaleCurveIter;
+	}
+	
 	auto bone_name = std::string{node->getName()};
 		
 	auto poseMatrix = SfbxMatToGlmMat(node->getLocalMatrix());
 	
-	name_bone_map_[bone_name] = std::make_unique<Bone>(bone_name, positionCurve, rotationCurve, scaleCurve, glm::inverse(poseMatrix));
+	name_bone_map_[bone_name] = std::make_unique<Bone>(bone_name, positionCurve.get(), rotationCurve.get(), scaleCurve.get(), glm::inverse(poseMatrix));
 	
 	for(auto& child : node->getChildren()){
-		if(sfbx::Model* model = sfbx::as<sfbx::Model>(child); model){
-			process_bones(animation, model);
+		if(auto model = sfbx::as<sfbx::Model>(child); model){
+			process_bones(animation, model.get());
 		}
 	}
 }
@@ -135,7 +152,7 @@ void FbxAnimation::process_bindpose(sfbx::Model *node)
 		name_bindpose_map_[name] = bindpose;
 		for (unsigned int i = 0; i < children_size; ++i)
 		{
-			process_bindpose(sfbx::as<sfbx::Model>(node->getChildren()[i]));
+			process_bindpose(sfbx::as<sfbx::Model>(node->getChildren()[i]).get());
 		}
 	}
 }
