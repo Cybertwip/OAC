@@ -96,6 +96,7 @@ void Property::read(std::istream& is)
 void Property::write(std::ostream& os)
 {
     writev(os, m_type);
+	
     if (m_type == PropertyType::Blob || m_type == PropertyType::String) {
         writev(os, (uint32_t)m_data.size());
         writev(os, m_data);

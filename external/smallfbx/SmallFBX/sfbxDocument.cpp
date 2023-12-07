@@ -120,13 +120,11 @@ bool Document::readBinary(std::istream& is)
 
 void Document::importFBXObjects()
 {
-	std::vector<ObjectPtr> newObjects;
     if (Node* objects = findNode(sfbxS_Objects)) {
         initialize();
         for (Node* n : objects->getChildren()) {
             if (ObjectPtr obj = createObject(GetObjectClass(n), GetObjectSubClass(n))) {
                 obj->setNode(n);
-				newObjects.push_back(obj);
             }
         }
     }
@@ -136,22 +134,22 @@ void Document::importFBXObjects()
             auto name = n->getName();
             auto ct = GetPropertyString(n, 0);
             if (name == sfbxS_C && ct == sfbxS_OO) {
-                ObjectPtr child = FindObjectById(newObjects, GetPropertyValue<int64>(n, 1));
-				ObjectPtr parent = FindObjectById(newObjects, GetPropertyValue<int64>(n, 2));
+                ObjectPtr child = FindObjectById(m_objects, GetPropertyValue<int64>(n, 1));
+				ObjectPtr parent = FindObjectById(m_objects, GetPropertyValue<int64>(n, 2));
                 if (child && parent)
                     parent->addChild(child);
             }
             else if (name == sfbxS_C && ct == sfbxS_OP) {
-				ObjectPtr child = FindObjectById(newObjects,GetPropertyValue<int64>(n, 1));
-				ObjectPtr parent = FindObjectById(newObjects, GetPropertyValue<int64>(n, 2));
+				ObjectPtr child = FindObjectById(m_objects,GetPropertyValue<int64>(n, 1));
+				ObjectPtr parent = FindObjectById(m_objects, GetPropertyValue<int64>(n, 2));
                 auto p = GetPropertyString(n, 3);
                 if (child && parent)
                     parent->addChild(child, p);
             }
 #ifdef sfbxEnableLegacyFormatSupport
             else if (name == sfbxS_Connect && ct == sfbxS_OO) {
-                ObjectPtr child = FindObjectByName(newObjects, GetPropertyString(n, 1));
-                ObjectPtr parent = FindObjectByName(newObjects, GetPropertyString(n, 2));
+                ObjectPtr child = FindObjectByName(m_objects, GetPropertyString(n, 1));
+                ObjectPtr parent = FindObjectByName(m_objects, GetPropertyString(n, 2));
                 if (child && parent)
                     parent->addChild(child);
             }

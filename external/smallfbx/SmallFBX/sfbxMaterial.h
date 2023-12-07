@@ -15,12 +15,16 @@ public:
     ObjectClass getClass() const override;
     ObjectSubClass getSubClass() const override;
 	
+	bool getEmbedded() const;
+	
 protected:
 	void importFBXObjects() override;
 	void exportFBXObjects() override;
-	void exportFBXConnections() override;
+
 private:
 	std::vector<std::stringstream> mChildStreams;
+	
+	bool m_embedded;
 };
 
 class Texture : public Object

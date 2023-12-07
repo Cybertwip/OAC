@@ -4,7 +4,32 @@
 #include "sfbxDeformer.h"
 #include "sfbxMaterial.h"
 #include "sfbxDocument.h"
-
+#include <execinfo.h>
+#include <iostream>
+//
+//void printStackTrace() {
+//	const int max_frames = 64;
+//	void* frame_ptrs[max_frames];
+//	
+//	// Get the backtrace
+//	int frame_count = backtrace(frame_ptrs, max_frames);
+//	
+//	// Get symbols for each frame
+//	char** symbols = backtrace_symbols(frame_ptrs, frame_count);
+//	
+//	if (symbols == nullptr) {
+//		std::cerr << "Error getting backtrace symbols\n";
+//		return;
+//	}
+//	
+//	// Print the stack trace
+//	for (int i = 0; i < frame_count; ++i) {
+//		std::cout << symbols[i] << "\n";
+//	}
+//	
+//	// Free the memory allocated by backtrace_symbols
+//	free(symbols);
+//}
 namespace sfbx {
 
 
@@ -12,8 +37,6 @@ ObjectClass AnimationStack::getClass() const { return ObjectClass::AnimationStac
 
 void AnimationStack::importFBXObjects()
 {
-    
-
     EnumerateProperties(getNode(), [this](Node* p) {
         auto name = GetPropertyString(p, 0);
         if (name == sfbxS_LocalStart)
@@ -161,6 +184,9 @@ std::shared_ptr<AnimationCurveNode> AnimationLayer::createCurveNode(AnimationKin
 {
     auto ret = createChild<AnimationCurveNode>();
     ret->setup(kind, target, true);
+	
+//	std::cerr << "Target " << target->getName() << " Class " << std::to_string((int)target->getClass()) << " Sub Class " << std::to_string((int)target->getSubClass()) << " PTR " <<  std::to_string((std::ptrdiff_t)ret.get()) << std::endl;
+//	printStackTrace();
     return ret;
 }
 
@@ -310,8 +336,6 @@ ObjectClass AnimationCurveNode::getClass() const { return ObjectClass::Animation
 
 void AnimationCurveNode::importFBXObjects()
 {
-    
-
     auto name = getName();
     if (auto aki = FindAnimationKindInfo(name)) {
         setup(aki->kind, getAnimationTarget(), false);
@@ -344,18 +368,18 @@ void AnimationCurveNode::exportFBXObjects()
 
 void AnimationCurveNode::exportFBXConnections()
 {
-    // ignore super::constructLinks()
+	// ignore super::constructLinks()
 	for(auto& parent : getParents()){
 		if(auto layer = sfbx::as<sfbx::AnimationLayer>(parent)){
 			m_document->createLinkOO(shared_from_this(), layer);
 		}
 	}
-    if (auto* info = FindAnimationKindInfo(m_kind)) {
-        if (auto target = getAnimationTarget())
-            m_document->createLinkOP(shared_from_this(), target, info->link_name);
-        for (auto curve : m_curves)
-            m_document->createLinkOP(curve, shared_from_this(), curve->m_link_name);
-    }
+	if (auto* info = FindAnimationKindInfo(m_kind)) {
+		if (auto target = getAnimationTarget())
+			m_document->createLinkOP(shared_from_this(), target, info->link_name);
+		for (auto curve : m_curves)
+			m_document->createLinkOP(curve, shared_from_this(), curve->m_link_name);
+	}
 }
 
 void AnimationCurveNode::addChild(ObjectPtr v)
@@ -589,6 +613,9 @@ void AnimationCurveNode::unlink()
         m_document->eraseObject(c);
     }
     m_document->eraseObject(shared_from_this());
+}
+
+AnimationCurveNode::AnimationCurveNode(){
 }
 
 

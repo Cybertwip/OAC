@@ -214,9 +214,21 @@ void Object::addChild(ObjectPtr v, string_view p)
 
 void Object::eraseChild(ObjectPtr v)
 {
-    //TODO m_child_property_names
-    if (erase(m_children, v))
-        v->eraseParent(shared_from_this());
+	auto it = std::find(m_children.begin(), m_children.end(), v);
+	
+	if (it != m_children.end()) {
+		size_t index = std::distance(m_children.begin(), it);
+		
+		// Remove the child property name at the found index
+		if (index < m_child_property_names.size()) {
+			m_child_property_names.erase(m_child_property_names.begin() + index);
+		}
+		
+		// Remove the child from the m_children vector
+		m_children.erase(it);
+		
+		v->eraseParent(shared_from_this());
+	}
 }
 
 void Object::addParent(ObjectPtr v)

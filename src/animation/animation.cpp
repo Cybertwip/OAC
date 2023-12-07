@@ -89,13 +89,20 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 	for (auto &name_bone : name_bone_map_)
 	{
 		auto limb = std::find_if(limbs.begin(), limbs.end(), [&name_bone](sfbx::ObjectPtr nodePtr){
-			return  nodePtr->getName().compare(name_bone.first) == 0;
+			return  nodePtr->getName().compare(name_bone.first) == 0 && nodePtr->getSubClass() != sfbx::ObjectSubClass::Unknown;
 		});
 		
 		LOG("Found node: " + name_bone.first + " : " + std::to_string(limb != limbs.end()));
+		
+		
+
 
 		if (limb != limbs.end())
 		{
+			if(sfbx::as<sfbx::Model>(*limb)){
+				sfbx::as<sfbx::Model>(*limb)->setPreRotation(sfbx::float3{ 0, 0, 0 });
+			}
+
 			auto positionCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Position, *limb);
 			
 			auto rotationCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Rotation, *limb);
@@ -106,8 +113,6 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 				auto time_end = *std::next(name_bone.second->get_time_set().end(), -1);
 				duration = std::max(duration, time_end);
 			}
-		} else {
-			bool _ = false;
 		}
 	}
 	animationLayer->setName(anim_name);

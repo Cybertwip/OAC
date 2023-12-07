@@ -267,7 +267,7 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 		scaleCurveNode->addValue(time, sfbx::float3{ s.x, s.y, s.z });
 	}
 	
-	if(transform_map.empty()){
+	if(transform_map.empty() || time_set_.empty()){
 		auto transformation = SfbxMatToGlmMat(limb->getGlobalMatrix());
 		
 		auto [t, r, s] = DecomposeTransform(transformation);
@@ -282,10 +282,7 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 		rotationCurveNode->addValue(0, sfbx::float3{ eulerAnglesDeg.x, eulerAnglesDeg.y, eulerAnglesDeg.z});
 		
 		scaleCurveNode->addValue(0, sfbx::float3{ s.x, s.y, s.z });
-	}
-	
-	limb->setPreRotation(sfbx::float3{ 0, 0, 0 });
-	
+	}	
 }
 void Bone::get_ai_node(aiNodeAnim *channel, const aiMatrix4x4 &binding_pose_transform, float factor, bool is_interpolated)
 {

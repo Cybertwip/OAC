@@ -132,10 +132,12 @@ namespace anim
         auto animation_comp = entity->get_component<AnimationComponent>();
         auto animation = animation_comp->get_mutable_animation();
 		auto stacks = doc->getAnimationStacks();
-		
+		std::vector<std::shared_ptr<sfbx::AnimationLayer>> layers;
+
 		std::vector<std::shared_ptr<sfbx::AnimationCurveNode>> curveNodes;
 		for(auto& stack : stacks){
 			for(auto& layer : stack->getAnimationLayers()){
+				layers.push_back(layer);
 				for(auto& node : layer->getAnimationCurveNodes()){
 					curveNodes.push_back(node);
 				}
@@ -147,6 +149,10 @@ namespace anim
 			node->unlink();
 		}
 		
+		for(auto& layer : layers){
+			doc->eraseObject(layer);
+		}
+
 		for(auto& stack : stacks){
 			doc->eraseObject(stack);
 		}
