@@ -2,6 +2,25 @@
 #include "sfbxMaterial.h"
 #include "sfbxDocument.h"
 
+namespace {
+	const std::string kEmbeddedToken = "*";
+
+
+std::string getFileExtension(const std::string& filename) {
+	// Find the last dot in the filename
+	size_t dotPos = filename.find_last_of('.');
+	
+	// Check if a dot was found and it's not the last character in the string
+	if (dotPos != std::string::npos && dotPos < filename.length() - 1) {
+		// Extract and return the substring after the last dot
+		return filename.substr(dotPos + 1);
+	} else {
+		// No dot found or it's the last character, return an empty string or handle as needed
+		return "";
+	}
+}
+}
+
 namespace sfbx {
 
 ObjectClass Video::getClass() const { return ObjectClass::Video; }
@@ -11,12 +30,17 @@ bool Video::getEmbedded() const {
 	return m_embedded;
 }
 
+std::string_view Video::getFilename() const {
+	return m_filename;
+}
+
 void Video::importFBXObjects()
 {
 	super::importFBXObjects();
 	// todo
 
 	std::string embeddedFilename;
+	std::string imageExtension;
 
 	bool isEmbedded = false;
 	
@@ -25,11 +49,7 @@ void Video::importFBXObjects()
 		if(child->getName() == "Filename"){
 			embeddedFilename = child->getProperty(0)->getString();
 		}
-		
-		if(child->getName() == "RelativeFilename"){
-			embeddedFilename = child->getProperty(0)->getString();
-		}
-		
+				
 		if(child->getName() == "Content"){
 			isEmbedded = true;
 		}
@@ -38,7 +58,8 @@ void Video::importFBXObjects()
 	
 	
 	if(isEmbedded){
-		embeddedFilename = "*:" + std::to_string(this->getID());
+		imageExtension = getFileExtension(embeddedFilename);
+		embeddedFilename = kEmbeddedToken + ":" + std::to_string(this->getID()) + "." + imageExtension;
 	}
 	
 	for(auto& child : getNode()->getChildren()){
@@ -56,6 +77,7 @@ void Video::importFBXObjects()
 	}
 	
 	m_embedded = isEmbedded;
+	m_filename = embeddedFilename;
 }
 
 
@@ -91,12 +113,12 @@ void Texture::importFBXObjects()
 	if(video){
 		hasVideo = true;
 		
-		embeddedFilename = "*:" + std::to_string(video->getID());
+		embeddedFilename = sfbx::as<Video>(video)->getFilename();
 
 	}
 	
 	
-	for(auto& child : getNode()->getChildren()){		
+	for(auto& child : getNode()->getChildren()){
 		if(child->getName() == "FileName" || child->getName() == "RelativeFilename"){
 			
 			if(hasVideo){

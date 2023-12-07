@@ -16,6 +16,7 @@ public:
     ObjectSubClass getSubClass() const override;
 	
 	bool getEmbedded() const;
+	std::string_view getFilename() const;
 	
 protected:
 	void importFBXObjects() override;
@@ -25,6 +26,7 @@ private:
 	std::vector<std::stringstream> mChildStreams;
 	
 	bool m_embedded;
+	std::string m_filename;
 };
 
 class Texture : public Object
