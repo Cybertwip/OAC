@@ -315,7 +315,30 @@ void ToVector(span<Property> props, D& dst)
             *d++ = prop.getValue<get_scalar_t<S>>();
     }
 }
+
+
+template<class S, class D>
+void ToVectorWithOffset(size_t offset, span<Property> props, D& dst)
+{
+	if (props.size() - offset == get_vector_size<D>) {
+		auto* d = dst.data();
+
+		for (size_t index = offset; index<props.size(); ++index)
+
+		{
+			auto& prop = props[index];
+			*d++ = prop.getValue<get_scalar_t<S>>();
+			
+		}
+	}
+}
 template<> void Node::getPropertiesValues<double4x4, float4x4>(float4x4& dst) const { ToVector<double4x4, float4x4>(getProperties(), dst); }
+
+template<> void Node::getPropertiesValues<float3>(float3& dst) const { ToVector<float32, float3>(getProperties(), dst); }
+
+template<> void Node::getPropertiesValues<float3>(size_t offset, float3& dst) const { ToVectorWithOffset<float32, float3>(offset, getProperties(), dst); }
+
+template<> void Node::getPropertiesValues<double3>(size_t offset, double3& dst) const { ToVectorWithOffset<float64, double3>(offset, getProperties(), dst); }
 
 #endif
 

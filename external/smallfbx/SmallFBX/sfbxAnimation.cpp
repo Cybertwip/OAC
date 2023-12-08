@@ -615,10 +615,6 @@ void AnimationCurveNode::unlink()
     m_document->eraseObject(shared_from_this());
 }
 
-AnimationCurveNode::AnimationCurveNode(){
-}
-
-
 ObjectClass AnimationCurve::getClass() const { return ObjectClass::AnimationCurve; }
 
 void AnimationCurve::importFBXObjects()

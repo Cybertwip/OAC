@@ -20,9 +20,9 @@
 namespace anim
 {
     using namespace gl;
-    Model::Model(const char *path, const aiScene *scene)
+    Model::Model(const std::string& path, const sfbx::DocumentPtr doc)
     {
-        load_model(path, scene);
+        load_model(path, doc);
     }
 
     Model::~Model()
@@ -30,184 +30,251 @@ namespace anim
         root_node_ = nullptr;
     }
 
-    void Model::load_model(const char *path, const aiScene *scene)
+    void Model::load_model(const std::string& path, const sfbx::DocumentPtr doc)
     {
         directory_ = std::filesystem::u8path(path);
         name_ = directory_.filename().string();
-        process_node(root_node_, scene->mRootNode, scene);
+        process_node(root_node_, doc->getRootModel(), doc);
         textures_loaded_.clear();
     }
 
-    void Model::process_node(std::shared_ptr<ModelNode> &model_node, aiNode *ai_node, const aiScene *scene)
+    void Model::process_node(std::shared_ptr<ModelNode> &model_node, const std::shared_ptr<sfbx::Model> node, const sfbx::DocumentPtr doc)
     {
+		std::vector<std::shared_ptr<sfbx::Mesh>> meshes;
+		std::vector<std::shared_ptr<sfbx::Model>> models;
+		std::vector<sfbx::ObjectPtr> filteredMeshes;
+		std::vector<sfbx::ObjectPtr> filteredModels;
+		
+		auto meshCondition = [](const sfbx::ObjectPtr& nodePtr) {
+			return std::dynamic_pointer_cast<sfbx::Mesh>(nodePtr) != nullptr;
+		};
+		auto modelCondition = [](const sfbx::ObjectPtr& nodePtr) {
+			return std::dynamic_pointer_cast<sfbx::Model>(nodePtr) != nullptr;
+		};
+
+		auto nodes = node->getChildren();
+		
+		std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filteredMeshes), meshCondition);
+		std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filteredModels), modelCondition);
+		
+		for(auto& filteredObject : filteredMeshes){
+			meshes.push_back(std::dynamic_pointer_cast<sfbx::Mesh>(filteredObject));
+		}
+		
+		for(auto& filteredObject : filteredModels){
+			models.push_back(std::dynamic_pointer_cast<sfbx::Model>(filteredObject));
+		}
+
+				
         node_count_++;
-        std::string model_name = std::string(ai_node->mName.C_Str());
-        model_node.reset(new ModelNode(AiMatToGlmMat(ai_node->mTransformation),
-                                       model_name,
-                                       ai_node->mNumChildren));
-        for (unsigned int i = 0; i < ai_node->mNumMeshes; i++)
+        std::string model_name = std::string{node->getName()};
+        model_node.reset(new ModelNode(SfbxMatToGlmMat(node->getLocalMatrix()),
+			 model_name,
+			 filteredModels.size()));
+		auto identity = glm::identity<glm::mat4>();
+		
+//		model_node.reset(new ModelNode(identity,
+//			 model_name,
+//		   	filteredModels.size()));
+		
+        for (unsigned int i = 0; i < meshes.size(); i++)
         {
-            aiMesh *mesh = scene->mMeshes[ai_node->mMeshes[i]];
-            model_node->meshes.emplace_back(process_mesh(mesh, scene));
-            model_node->has_bone = mesh->HasBones();
+			auto mesh = meshes[i];
+            model_node->meshes.emplace_back(process_mesh(mesh, doc));
+			
+            model_node->has_bone = mesh->getGeometry()->hasSkinDeformer();
         }
 
-        for (unsigned int i = 0; i < ai_node->mNumChildren; i++)
+        for (unsigned int i = 0; i < filteredModels.size(); i++)
         {
-            process_node(model_node->childrens[i], ai_node->mChildren[i], scene);
-        }
-    }
+			auto child = sfbx::as<sfbx::Model>(filteredModels[i]);
+			
+			if(child){
+				process_node(model_node->childrens[i], child, doc);
 
-    void Model::get_ai_node_for_anim(aiNode *ai_node, ModelNode *model_node, aiNode *parent_ai_node)
-    {
-        ai_node->mName = aiString(model_node->name.c_str());
-        ai_node->mTransformation = GlmMatToAiMat(model_node->relative_transformation);
-        ai_node->mParent = parent_ai_node;
-        ai_node->mNumChildren = model_node->childrens.size();
-        ai_node->mChildren = new aiNode *[ai_node->mNumChildren];
-
-        for (unsigned int i = 0; i < ai_node->mNumChildren; i++)
-        {
-            ai_node->mChildren[i] = new aiNode();
-            get_ai_node_for_anim(ai_node->mChildren[i], model_node->childrens[i].get(), ai_node);
+			}
         }
     }
 
-    void Model::get_ai_root_node_for_anim(aiNode *ai_root_node)
-    {
-        get_ai_node_for_anim(ai_root_node, root_node_.get(), NULL);
-    }
-
-    std::shared_ptr<Mesh> Model::process_mesh(aiMesh *mesh, const aiScene *scene)
+    std::shared_ptr<Mesh> Model::process_mesh(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc)
     {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
         MaterialProperties mat_properties;
 
-        LOG(mesh->mName.C_Str());
+		auto meshName = std::string{mesh->getName()};
+        LOG(meshName);
 
+		auto geometry = mesh->getGeometry();
+		
         // process vertex
-        for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+		auto points = geometry->getPointsDeformed();
+		auto normals = geometry->getNormals();
+
+        for (unsigned int i = 0; i < points.size(); i++)
         {
+			auto& point = points[i];
+			
+			
             Vertex vertex;
-            vertex.set_position(AiVecToGlmVec(mesh->mVertices[i]));
-            if (mesh->mNormals)
+            vertex.set_position(SfbxVecToGlmVec(point));
+            if (!normals.empty())
             {
-                vertex.set_normal(AiVecToGlmVec(mesh->mNormals[i]));
+				auto& normal =
+				normals[i];
+
+                vertex.set_normal(SfbxVecToGlmVec(normal));
             }
-            if (mesh->mTextureCoords[0])
-            {
-                vertex.set_texture_coords(glm::vec2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
-            }
-            if (mesh->mTangents)
-            {
-                vertex.set_tangent(glm::vec3{
-                    mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z});
-            }
-            if (mesh->mBitangents)
-            {
-                vertex.set_bitangent(glm::vec3{
-                    mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z});
-            }
+//            if (mesh->mTextureCoords[0])
+//            {
+//                vertex.set_texture_coords(glm::vec2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
+//            }
+//            if (mesh->mTangents)
+//            {
+//                vertex.set_tangent(glm::vec3{
+//                    mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z});
+//            }
+//            if (mesh->mBitangents)
+//            {
+//                vertex.set_bitangent(glm::vec3{
+//                    mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z});
+//            }
 
             vertices.push_back(vertex);
         }
 
-        process_bone(mesh, scene, vertices);
+        process_bone(mesh, doc, vertices);
 
         // process indices
-        for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-        {
-            aiFace face = mesh->mFaces[i];
-            for (unsigned int j = 0; j < face.mNumIndices; j++)
-                indices.push_back(face.mIndices[j]);
-        }
+		
+		for(unsigned int i = 0; i<geometry->getIndices().size(); ++i){
+			indices.push_back(geometry->getIndices()[i]);
+		}
+		
+		
+		if(mesh->getMaterials().size() > 0){
+			auto material = mesh->getMaterials()[0];
+			
+			auto color = material->getAmbientColor();
+			
+			mat_properties.ambient.x = color.x;
+			mat_properties.ambient.y = color.y;
+			mat_properties.ambient.z = color.z;
 
+			color = material->getDiffuseColor();
+			
+			mat_properties.diffuse.x = color.x;
+			mat_properties.diffuse.y = color.y;
+			mat_properties.diffuse.z = color.z;
+
+			color = material->getSpecularColor();
+			
+			mat_properties.specular.x = color.x;
+			mat_properties.specular.y = color.y;
+			mat_properties.specular.z = color.z;
+
+			mat_properties.shininess = material->getShininess();
+
+			
+//			std::vector<Texture> diffuseMaps = load_material_textures(material, scene, aiTextureType_DIFFUSE, "texture_diffuse");
+//			
+//			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+//			
+//			if (diffuseMaps.size() > 0)
+//			{
+//				mat_properties.has_diffuse_texture = true;
+//			}
+
+
+		}
+		
         // process material
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        aiColor3D color{};
+//        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+//        aiColor3D color{};
+//        std::vector<Texture> diffuseMaps = load_material_textures(material, scene, aiTextureType_DIFFUSE, "texture_diffuse");
+//        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+//        if (diffuseMaps.size() > 0)
+//        {
+//            mat_properties.has_diffuse_texture = true;
+//        }
+//
+//        std::vector<Texture> specularMaps = load_material_textures(material, scene, aiTextureType_SPECULAR, "texture_specular");
+//        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+//
+//        std::vector<Texture> normalMaps = load_material_textures(material, scene, aiTextureType_HEIGHT, "texture_normal");
+//        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+//
+//        std::vector<Texture> heightMaps = load_material_textures(material, scene, aiTextureType_AMBIENT, "texture_height");
+//        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-        material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-        mat_properties.ambient.x = color.r;
-        mat_properties.ambient.y = color.g;
-        mat_properties.ambient.z = color.b;
-
-        material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-        mat_properties.diffuse.x = color.r;
-        mat_properties.diffuse.y = color.g;
-        mat_properties.diffuse.z = color.b;
-
-        material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-        mat_properties.specular.x = color.r;
-        mat_properties.specular.y = color.g;
-        mat_properties.specular.z = color.b;
-
-        float shininess{};
-        material->Get(AI_MATKEY_SHININESS, shininess);
-        mat_properties.shininess = shininess;
-
-        std::vector<Texture> diffuseMaps = load_material_textures(material, scene, aiTextureType_DIFFUSE, "texture_diffuse");
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        if (diffuseMaps.size() > 0)
-        {
-            mat_properties.has_diffuse_texture = true;
-        }
-
-        std::vector<Texture> specularMaps = load_material_textures(material, scene, aiTextureType_SPECULAR, "texture_specular");
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
-        std::vector<Texture> normalMaps = load_material_textures(material, scene, aiTextureType_HEIGHT, "texture_normal");
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
-        std::vector<Texture> heightMaps = load_material_textures(material, scene, aiTextureType_AMBIENT, "texture_height");
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
-        return std::make_shared<GLMesh>(vertices, indices, textures, mat_properties);
+		return std::make_shared<GLMesh>(vertices, indices, textures, mat_properties);
     }
 
-    void Model::process_bone(aiMesh *mesh, const aiScene *scene, std::vector<Vertex> &vertices)
+    void Model::process_bone(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc, std::vector<Vertex> &vertices)
     {
         auto &bone_info_map = bone_info_map_;
         int &bone_count = bone_count_;
-        int bone_num = mesh->mNumBones;
-        for (int bone_idx = 0; bone_idx < bone_num; ++bone_idx)
-        {
-            int bone_id = -1;
-            std::string bone_name = mesh->mBones[bone_idx]->mName.C_Str();
-            auto bone_it = bone_info_map.find(bone_name);
+		
+		auto deformers = mesh->getGeometry()->getDeformers();
+		
+		std::shared_ptr<sfbx::Skin> skin;
+		
+		for(auto& deformer : deformers){
+			if(skin = sfbx::as<sfbx::Skin>(deformer); skin){
+				break;
+			}
+		}
+		
+		if(skin){
+			auto skinClusters = skin->getChildren();
+			int bone_num = skinClusters.size();
+			for (int bone_idx = 0; bone_idx < bone_num; ++bone_idx)
+			{
+				auto skinCluster = sfbx::as<sfbx::Cluster>(skinClusters[bone_idx]);
+				
+				int bone_id = -1;
+				std::string bone_name = std::string{skinCluster->getChild()->getName()};
+				auto bone_it = bone_info_map.find(bone_name);
+				
+				auto limbNode = sfbx::as<sfbx::LimbNode>(skinCluster->getChild());
 
-            if (bone_it == bone_info_map.end())
-            {
-                BoneInfo new_bone_info{};
-                new_bone_info.id = bone_count;
-                new_bone_info.offset = AiMatToGlmMat(mesh->mBones[bone_idx]->mOffsetMatrix);
+				if (bone_it == bone_info_map.end())
+				{
+					BoneInfo new_bone_info{};
+					new_bone_info.id = bone_count;
+					
+					new_bone_info.offset = SfbxMatToGlmMat(skinCluster->getTransform());
 
-                bone_info_map[bone_name] = new_bone_info;
-
-                bone_id = new_bone_info.id;
-                bone_count++;
-                LOG("- - bone_name: " + bone_name + " bone_id: " + std::to_string(bone_id));
-            }
-            else
-            {
-                bone_id = bone_it->second.id;
-            }
-
-            assert(bone_id != -1);
-
-            auto weights = mesh->mBones[bone_idx]->mWeights;
-            int weights_num = mesh->mBones[bone_idx]->mNumWeights;
-
-            for (int weight_idx = 0; weight_idx < weights_num; ++weight_idx)
-            {
-                int vertex_id = weights[weight_idx].mVertexId;
-                float weight = weights[weight_idx].mWeight;
-
-                assert(static_cast<size_t>(vertex_id) <= vertices.size());
-                vertices[vertex_id].set_bone(bone_id, weight);
-            }
-        }
+					bone_info_map[bone_name] = new_bone_info;
+					
+					bone_id = new_bone_info.id;
+					bone_count++;
+					LOG("- - bone_name: " + bone_name + " bone_id: " + std::to_string(bone_id));
+				}
+				else
+				{
+					bone_id = bone_it->second.id;
+				}
+				
+				assert(bone_id != -1);
+				
+				auto weights = skinCluster->getWeights();
+				auto indices = skinCluster->getIndices();
+				
+				int weights_num = weights.size();
+				
+				for (int weight_idx = 0; weight_idx < weights_num; ++weight_idx)
+				{
+					int vertex_id = indices[weight_idx];
+					float weight = weights[weight_idx];
+					
+					assert(static_cast<size_t>(vertex_id) <= vertices.size());
+					vertices[vertex_id].set_bone(bone_id, 1);
+				}
+			}
+		}
+		
     }
 
     std::vector<Texture> Model::load_material_textures(aiMaterial *mat, const aiScene *scene, aiTextureType type,

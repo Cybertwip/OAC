@@ -160,12 +160,61 @@ void Texture::exportFBXConnections()
 
 ObjectClass Material::getClass() const { return ObjectClass::Material; }
 
+double3 Material::getAmbientColor() const
+{
+	return m_ambient_color;
+}
+
+double3 Material::getDiffuseColor() const
+{
+	return m_diffuse_color;
+}
+
+
+double3 Material::getSpecularColor() const
+{
+	return m_specular_color;
+}
+
+float64 Material::getShininess() const
+{
+	return m_shininess;
+}
+
 void Material::importFBXObjects()
 {
     super::importFBXObjects();
-    // todo
 	
+    // todo
 	for(auto& child : getNode()->getChildren()){
+		
+		if(child->getName() == "Properties70"){
+			
+			auto propertyChildren = child->getChildren();
+			
+			for(auto propertyChild : propertyChildren){
+				auto name = propertyChild->getProperty(0)->getString();
+				
+				
+				if(name == "AmbientColor"){
+					propertyChild->getPropertiesValues<double3>(4, m_ambient_color);
+				}
+				
+				if(name == "DiffuseColor"){
+					propertyChild->getPropertiesValues<double3>(4, m_diffuse_color);
+				}
+
+				if(name == "SpecularColor"){
+					propertyChild->getPropertiesValues<double3>(4, m_specular_color);
+				}
+				
+				if(name == "Shininess"){
+					m_shininess = propertyChild->getProperty(4)->getValue<float64>();
+				}
+			}
+		}
+			
+		
 		auto stream = std::stringstream();
 		
 		child->writeAscii(stream);

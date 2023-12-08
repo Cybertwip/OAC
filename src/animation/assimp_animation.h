@@ -21,15 +21,13 @@ namespace anim
     public:
 		FbxAnimation() = delete;
 
-		FbxAnimation(const aiAnimation *animation, const aiScene *scene, const char *path);
+		FbxAnimation(const sfbx::DocumentPtr doc, const std::shared_ptr<sfbx::AnimationLayer> animationLayer, const std::string& path);
 
         ~FbxAnimation();
 
     private:
-        void init_animation(const aiAnimation *animation, const aiScene *scene, const char *path);
+        void init_animation(const sfbx::DocumentPtr doc, const std::shared_ptr<sfbx::AnimationLayer> animationLayer, const std::string& path);
 		void process_bones(const sfbx::AnimationLayer *animation, sfbx::Model *node);
-        void process_bones(const aiAnimation *animation, const aiNode *root_node);
-		void process_bindpose(const aiNode *node);
 		void process_bindpose(sfbx::Model *node);
 		
     };

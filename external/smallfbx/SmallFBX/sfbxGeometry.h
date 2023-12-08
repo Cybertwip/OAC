@@ -80,7 +80,8 @@ public:
 
     span<int> getCounts() const;
     span<int> getIndices() const;
-    span<float3> getPoints() const;
+	span<float3> getPoints() const;
+	span<float3> getNormals() const;
     span<LayerElementF3> getNormalLayers() const; // can be zero or multiple layers
     span<LayerElementF2> getUVLayers() const;     // can be zero or multiple layers
     span<LayerElementF4> getColorLayers() const;  // can be zero or multiple layers
@@ -107,7 +108,8 @@ protected:
 
     RawVector<int> m_counts;
     RawVector<int> m_indices;
-    RawVector<float3> m_points;
+	RawVector<float3> m_points;
+	RawVector<float3> m_normals;
     RawVector<float3> m_points_deformed;
     std::vector<LayerElementF3> m_normal_layers;
     std::vector<LayerElementF2> m_uv_layers;

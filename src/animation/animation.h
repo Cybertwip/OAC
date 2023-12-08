@@ -24,7 +24,7 @@ class PoseComponent;
 enum AnimationType
 {
 	None,
-	Assimp,
+	Fbx,
 	Json,
 	Raw
 };

@@ -15,6 +15,8 @@
 #include <memory.h>
 #include "../util/log.h"
 
+#include "SmallFBX.h"
+
 namespace anim
 {
     class Mesh;
@@ -27,13 +29,14 @@ namespace anim
         int id;
 
         /*offset matrix transforms vertex from model space to bone space*/
-        glm::mat4 offset;
+		glm::mat4 offset;
 
-        const glm::mat4 &get_offset() const
-        {
-            return offset;
-        }
-        const int &get_id() const
+		const glm::mat4 &get_offset() const
+		{
+			return offset;
+		}
+
+		const int &get_id() const
         {
             return id;
         }
@@ -69,7 +72,7 @@ namespace anim
                                                        const std::shared_ptr<ModelNode> &model_node,
                                                        Entity *parent_entity, int child_num, Entity *root_entity);
 
-        Model(const char *path, const aiScene *scene);
+        Model(const std::string& path, const sfbx::DocumentPtr doc);
         ~Model();
 
         // void draw_armature(ArmatureNode &armature, Shader &shader, const glm::mat4 &view, const glm::mat4 &projection, const glm::mat4 &world, float depth);
@@ -82,19 +85,18 @@ namespace anim
         // ArmatureNode *get_mutable_armature();
 
         std::shared_ptr<ModelNode> &get_mutable_root_node();
-        void get_ai_node_for_anim(aiNode *ai_node, ModelNode *model_node, aiNode *parent_ai_node);
-        void get_ai_root_node_for_anim(aiNode *ai_node);
+        
         const std::string &get_name() const;
 
     private:
-        void load_model(const char *path, const aiScene *scene);
+        void load_model(const std::string& path, const sfbx::DocumentPtr doc);
         /**
          * @brief 루트노드를 처음에 입력받아, 자식노드들을 순회하면서 메쉬들을 찾음
          *
          * @param node
          * @param scene
          */
-        void process_node(std::shared_ptr<ModelNode> &model_node, aiNode *ai_node, const aiScene *scene);
+        void process_node(std::shared_ptr<ModelNode> &model_node, const std::shared_ptr<sfbx::Model> node, const sfbx::DocumentPtr doc);
         /**
          * @brief 모든 vertex 데이터를 얻고, mesh의 indices를 얻고, 연관된 material(texture) 데이터를 얻음
          *
@@ -102,7 +104,7 @@ namespace anim
          * @param scene
          * @return Mesh
          */
-        std::shared_ptr<Mesh> process_mesh(aiMesh *mesh, const aiScene *scene);
+        std::shared_ptr<Mesh> process_mesh(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc);
         /**
          * @brief bone_info_map_에 bone 데이터를 넣고, vertex에 영향을 주는 bone과 그의 영향(가중치)을 집어넣음
          *
@@ -110,7 +112,7 @@ namespace anim
          * @param scene
          * @param vertices
          */
-        void process_bone(aiMesh *mesh, const aiScene *scene, std::vector<Vertex> &vertices);
+        void process_bone(const std::shared_ptr<sfbx::Mesh> mesh, const sfbx::DocumentPtr doc, std::vector<Vertex> &vertices);
 
         // void process_armature(const std::shared_ptr<ModelNode> &model_node, std::shared_ptr<ArmatureNode> &armature, ArmatureNode *parent_armature, int child_num);
 

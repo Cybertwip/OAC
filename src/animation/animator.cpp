@@ -159,7 +159,6 @@ void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_
 	
 	entity->set_local(blendedLocal);
 	
-	
 
 	global_transformation *= entity->get_local();
 
@@ -169,6 +168,7 @@ void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_
 	if (id < MAX_BONE_NUM)
 	{
 		// 역바인딩변환 행렬과 변환행렬을 곱해줌 (본공간 => 로컬공간)
+	
 		final_bone_matrices_[id] = global_transformation * offset;
 	}
 	

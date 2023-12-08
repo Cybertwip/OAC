@@ -50,12 +50,22 @@ using super = Object;
 public:
     ObjectClass getClass() const override;
 
+	double3 getAmbientColor() const;
+	double3 getDiffuseColor() const;
+	double3 getSpecularColor() const;
+	float64 getShininess() const;
+
 protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
 	void exportFBXConnections() override;
-
+	
 private:
+	double3 m_ambient_color;
+	double3 m_diffuse_color;
+	double3 m_specular_color;
+	float64 m_shininess;
+	
 	std::vector<std::stringstream> mChildStreams;
 };
 

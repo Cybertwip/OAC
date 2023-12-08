@@ -14,23 +14,6 @@ namespace fs = std::filesystem;
 namespace anim
 {
     Importer::Importer()
-        : assimp_flag_(
-			  aiProcess_GlobalScale |
-              aiProcess_CalcTangentSpace |
-              aiProcess_GenSmoothNormals |
-              aiProcess_ImproveCacheLocality |
-              aiProcess_LimitBoneWeights |
-              aiProcess_RemoveRedundantMaterials |
-              aiProcess_SplitLargeMeshes |
-              aiProcess_Triangulate |
-              aiProcess_GenUVCoords |
-              aiProcess_SortByPType |
-              aiProcess_FindDegenerates |
-              aiProcess_FindInvalidData |
-              aiProcess_FindInstances |
-              aiProcess_ValidateDataStructure |
-              aiProcess_OptimizeMeshes |
-              aiProcess_OptimizeGraph)
     {
     }
 
@@ -52,20 +35,24 @@ namespace anim
         }
         try
         {
-            Assimp::Importer importer;
-            importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
-            importer.SetPropertyInteger(AI_CONFIG_PP_SBBC_MAX_BONES, 128);
-            const aiScene *scene = importer.ReadFile(path_.c_str(), assimp_flag_);
+			sfbx::DocumentPtr doc = sfbx::MakeDocument(path_);
+			
+			if(doc->valid()){
+				model = import_model(doc);
+				
+				animations = import_animation(doc);
+				
+				
+				if (model == nullptr && animations.size() == 0)
+				{
+					LOG("ERROR::IMPORTER::NULL:  ANIMATIONS");
+				}
+				
+			} else {
+				LOG("ERROR::IMPORTER: INVALID FBX");
+			}
 
-            model = import_model(scene);
-			
-            animations = import_animation(scene);
-			
-			
-            if (model == nullptr && animations.size() == 0)
-            {
-                LOG("ERROR::IMPORTER::NULL " + std::string(importer.GetErrorString()));
-            }
+
         }
         catch (std::exception &e)
         {
@@ -73,25 +60,22 @@ namespace anim
         }
         return std::make_pair(model, animations);
     }
-    std::shared_ptr<Model> Importer::import_model(const aiScene *scene)
+    std::shared_ptr<Model> Importer::import_model(const sfbx::DocumentPtr doc)
     {
-        if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-        {
-            return nullptr;
-        }
-        return std::make_shared<Model>(path_.c_str(), scene);
+        return std::make_shared<Model>(path_, doc);
     }
-    std::vector<std::shared_ptr<Animation>> Importer::import_animation(const aiScene *scene)
+    std::vector<std::shared_ptr<Animation>> Importer::import_animation(const sfbx::DocumentPtr doc)
     {
         std::vector<std::shared_ptr<Animation>> animations;
-        if (scene && scene->mRootNode)
-        {
-            for (unsigned int i = 0; i < scene->mNumAnimations; i++)
-            {
-                auto animation = scene->mAnimations[i];
-                animations.push_back(std::make_shared<FbxAnimation>(animation, scene, path_.c_str()));
-            }
-        }
+		
+		if(doc && doc->valid()){
+			for(auto& stack : doc->getAnimationStacks()){
+				for(auto& animationLayer : stack->getAnimationLayers()){
+					animations.push_back(std::make_shared<FbxAnimation>(doc, animationLayer, path_));
+				}
+			}
+		}
+		
         return animations;
     }
 }

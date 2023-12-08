@@ -146,9 +146,6 @@ protected:
         float3 f3;
         int i;
     } m_default_value{};
-	
-public:
-	AnimationCurveNode();
 };
 
 

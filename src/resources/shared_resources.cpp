@@ -236,7 +236,7 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	ArmatureComponent *parent_armature = (parent_entity) ? parent_entity->get_component<ArmatureComponent>() : nullptr;
 	auto bone_info = model->get_pointer_bone_info(name);
 	auto bind_pose_transformation = model_node->relative_transformation;
-	entity->set_local(bind_pose_transformation);
+	//entity->set_local(bind_pose_transformation);
 	
 	PoseComponent *parent_pose = (parent_armature) ? parent_armature->get_pose() : nullptr;
 	if (parent_armature && !bone_info)
@@ -244,7 +244,8 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 		auto parent_offset = parent_armature->get_bone_offset();
 		BoneInfo missing_bone_info{
 			model->bone_count_++,
-			glm::inverse(glm::inverse(parent_offset) * bind_pose_transformation)};
+			glm::inverse(glm::inverse(parent_offset) * bind_pose_transformation),
+			};
 		parent_pose->add_bone(name, missing_bone_info);
 		model->bone_info_map_[name] = missing_bone_info;
 		bone_info = &(model->bone_info_map_[name]);
@@ -255,6 +256,12 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	{
 		PoseComponent *pose = parent_pose;
 		auto armature = entity->add_component<ArmatureComponent>();
+
+		glm::mat4 parent_offset = glm::identity<glm::mat4>();
+		if(parent_armature){
+			parent_offset = parent_armature->get_bone_offset();
+		}
+
 		if (parent_armature)
 		{
 			glm::vec4 relative_pos = bind_pose_transformation * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -283,11 +290,12 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 			pose->set_armature_root(entity.get());
 			armature->set_local_scale(0, 100.0f);
 		}
+		
 		armature->set_pose(pose);
 		armature->set_entity(entity.get());
 		armature->set_name(name);
 		armature->set_bone_id(bone_info->id);
-		armature->set_bone_offset(bone_info->offset);
+		armature->set_bone_offset(glm::inverse(glm::inverse(parent_offset) * bind_pose_transformation));
 		armature->set_bind_pose(bind_pose_transformation);
 		armature->set_shader(shaders_["armature"].get());
 		armature->selectionColor = entity_id << 8;

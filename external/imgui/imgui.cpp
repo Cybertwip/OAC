@@ -4668,6 +4668,7 @@ void ImGui::Initialize(ImGuiContext* context)
     DockContextInitialize(&g);
 #endif
 
+	g.IO.MousePos = ImVec2(0, 0);
     g.Initialized = true;
 }
 

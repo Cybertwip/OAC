@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "SmallFBX.h"
+
 struct aiScene;
 
 namespace anim
@@ -23,11 +25,10 @@ namespace anim
         float mScale = 100.0f;
 
     private:
-        std::shared_ptr<Model> import_model(const aiScene *scene);
-        std::vector<std::shared_ptr<Animation>> import_animation(const aiScene *scene);
+        std::shared_ptr<Model> import_model(const sfbx::DocumentPtr doc);
+        std::vector<std::shared_ptr<Animation>> import_animation(const sfbx::DocumentPtr doc);
 
     private:
-        unsigned int assimp_flag_ = 0U;
         std::string path_;
     };
 }

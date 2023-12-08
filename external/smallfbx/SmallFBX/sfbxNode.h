@@ -40,7 +40,9 @@ public:
     Property* getProperty(size_t i);
     // for legacy format. there are no array types and arrays are represented as a huge list of properties.
     template<class Src, class Dst> void getPropertiesValues(RawVector<Dst>& dst) const;
-    template<class Src, class Dst, sfbxRestrict(is_vector<Dst>)> void getPropertiesValues(Dst& dst) const;
+	template<class Src, class Dst, sfbxRestrict(is_vector<Dst>)> void getPropertiesValues(Dst& dst) const;
+
+	template<class Src, class Dst, sfbxRestrict(is_vector<Dst>)> void getPropertiesValues(size_t offset, Dst& dst) const;
 
     Node* getParent() const;
     span<Node*> getChildren() const;

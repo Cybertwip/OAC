@@ -108,10 +108,14 @@ void GeomMesh::checkModes(LayerElement<T>& layer)
 void GeomMesh::importFBXObjects()
 {
     for (auto n : getNode()->getChildren()) {
-        if (n->getName() == sfbxS_Vertices) {
-            // points
-            GetPropertyValue<double3>(m_points, n);
-        }
+		if (n->getName() == sfbxS_Vertices) {
+			// points
+			GetPropertyValue<double3>(m_points, n);
+		}
+		else if (n->getName() == sfbxS_Normals) {
+			// points
+			GetPropertyValue<double3>(m_normals, n);
+		}
         else if (n->getName() == sfbxS_PolygonVertexIndex) {
             // counts & indices
             GetPropertyValue<int>(m_indices, n);
@@ -343,6 +347,7 @@ void GeomMesh::exportFBXObjects()
 span<int> GeomMesh::getCounts() const { return make_span(m_counts); }
 span<int> GeomMesh::getIndices() const { return make_span(m_indices); }
 span<float3> GeomMesh::getPoints() const { return make_span(m_points); }
+span<float3> GeomMesh::getNormals() const { return make_span(m_normals); }
 span<LayerElementF3> GeomMesh::getNormalLayers() const  { return make_span(m_normal_layers); }
 span<LayerElementF2> GeomMesh::getUVLayers() const      { return make_span(m_uv_layers); }
 span<LayerElementF4> GeomMesh::getColorLayers() const   { return make_span(m_color_layers); }
