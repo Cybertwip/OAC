@@ -44,6 +44,14 @@ namespace ui
         float height = (float)scene->get_mutable_framebuffer()->get_height();
         // draw scene window
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0.0f, 0.0f});
+		
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		
+		ImGui::SetNextWindowClass(&window_class);
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
+
         if (ImGui::Begin(title, 0, sceneWindowFlags | ImGuiWindowFlags_NoScrollbar))
         {
             scene_pos_ = ImGui::GetWindowPos();
@@ -102,7 +110,8 @@ namespace ui
             sceneWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
         }
         ImGui::End();
-        ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
 
         draw_mode_window(ui_context);
     }

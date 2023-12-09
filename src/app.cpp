@@ -19,8 +19,8 @@
 #include "event/event_history.h"
 #include "resources/exporter.h"
 
-#include "cpython/py_manager.h"
-#include <pybind11/embed.h>
+//#include "cpython/py_manager.h"
+//#include <pybind11/embed.h>
 
 namespace fs = std::filesystem;
 
@@ -153,7 +153,7 @@ void App::post_update()
 	process_menu_context();
 	process_scene_context();
 	process_component_context();
-	process_python_context();
+//	process_python_context();
 }
 void App::process_timeline_context()
 {
@@ -292,36 +292,36 @@ void App::process_component_context()
 		shared_resources_->add_animation(retargeter.retarget(pose_comp));
 	}
 }
-
-void App::process_python_context()
-{
-	auto &ui_context = ui_->get_context();
-	auto &py_context = ui_context.python;
-	if (py_context.is_clicked_convert_btn)
-	{
-		auto selected_entity = scenes_[current_scene_idx_]->get_mutable_selected_entity();
-		auto selected_root = (selected_entity) ? selected_entity->get_mutable_root() : nullptr;
-		auto pose_comp = (selected_root) ? selected_root->get_component<anim::PoseComponent>() : nullptr;
-		if (selected_entity && selected_root && pose_comp)
-		{
-			anim::Exporter exporter;
-			std::string model_info = exporter.to_json(pose_comp->get_root_entity());
-			const char *model_info_c = model_info.c_str();
-			auto py = anim::PyManager::get_instance();
-			py->get_mediapipe_pose(anim::MediapipeInfo{py_context.video_path.c_str(),
-				py_context.save_path.c_str(),
-				model_info_c,
-				py_context.min_visibility,
-				py_context.is_angle_adjustment,
-				py_context.model_complexity,
-				py_context.min_detection_confidence,
-				py_context.fps,
-				&py_context.factor});
-			import_model(py_context.save_path.c_str());
-			import_animation(py_context.save_path.c_str());
-		}
-	}
-}
+//
+//void App::process_python_context()
+//{
+//	auto &ui_context = ui_->get_context();
+//	auto &py_context = ui_context.python;
+//	if (py_context.is_clicked_convert_btn)
+//	{
+//		auto selected_entity = scenes_[current_scene_idx_]->get_mutable_selected_entity();
+//		auto selected_root = (selected_entity) ? selected_entity->get_mutable_root() : nullptr;
+//		auto pose_comp = (selected_root) ? selected_root->get_component<anim::PoseComponent>() : nullptr;
+//		if (selected_entity && selected_root && pose_comp)
+//		{
+//			anim::Exporter exporter;
+//			std::string model_info = exporter.to_json(pose_comp->get_root_entity());
+//			const char *model_info_c = model_info.c_str();
+//			auto py = anim::PyManager::get_instance();
+//			py->get_mediapipe_pose(anim::MediapipeInfo{py_context.video_path.c_str(),
+//				py_context.save_path.c_str(),
+//				model_info_c,
+//				py_context.min_visibility,
+//				py_context.is_angle_adjustment,
+//				py_context.model_complexity,
+//				py_context.min_detection_confidence,
+//				py_context.fps,
+//				&py_context.factor});
+//			import_model(py_context.save_path.c_str());
+//			import_animation(py_context.save_path.c_str());
+//		}
+//	}
+//}
 
 void App::import_model(const char *const path)
 {

@@ -51,7 +51,7 @@ bool ImGui::LoadInternalIcons(ImFontAtlas *atlas)
 
     // Awesome Icons
     static const ImWchar fa_icons_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    atlas->AddFontFromFileTTF("./resources/font/D2Coding.ttf", 16.0f, NULL, atlas->GetGlyphRangesKorean());
+    atlas->AddFontFromFileTTF("resources/font/D2Coding.ttf", 16.0f, NULL, atlas->GetGlyphRangesKorean());
     atlas->AddFontFromMemoryCompressedBase85TTF(fa_regular_compressed_data_base85, icons_size, &icons_config, fa_icons_ranges);
     atlas->AddFontFromMemoryCompressedBase85TTF(fa_solid_compressed_data_base85, icons_size, &icons_config, fa_icons_ranges);
 

@@ -1,3 +1,5 @@
+set(CMAKE_BUILD_WITH_INSTALL_RPATH YES)
+
 # opengl library wrapper
 set(GLCPP_SRC
     glcpp/window.cpp
@@ -35,10 +37,10 @@ endif()
 
 message("==========================================================")
 # python
-add_executable(test12  cpython/main.cpp cpython/py_manager.cpp)
-target_link_libraries(test12 PUBLIC Python3::Python pybind11::embed)
-add_library(py  cpython/py_manager.cpp)
-target_link_libraries(py PUBLIC Python3::Python pybind11::embed)
+# add_executable(test12  cpython/main.cpp cpython/py_manager.cpp)
+# target_link_libraries(test12 PUBLIC Python3::Python pybind11::embed)
+# add_library(py  cpython/py_manager.cpp)
+# target_link_libraries(py PUBLIC Python3::Python pybind11::embed)
 
 # new
 set(test_src
@@ -121,7 +123,23 @@ target_include_directories(test PUBLIC ./
 
 message("==========================================================")
 
+set(BUNDLE)
+set(APP_ICON)
+if(APPLE)
+    set(BUNDLE MACOSX_BUNDLE)
+
+    set(MACOSX_BUNDLE_ICON_FILE AppIcon.icns)
+
+    # And this part tells CMake where to find and install the file itself
+    set(APP_ICON ${CMAKE_CURRENT_SOURCE_DIR}/../AppIcon.icns)
+    set_source_files_properties(${APP_ICON} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+
+endif()
+
 add_executable(OAC 
+${BUNDLE}
+${APP_ICON}
 ./main.cpp 
  
 ./UI/hierarchy_layer.cpp
@@ -151,13 +169,53 @@ if(MSVC)
   if (CMAKE_BUILD_TYPE  MATCHES Release)
       target_link_options(OAC PUBLIC "/INCREMENTAL" "/SUBSYSTEM:windows" "/ENTRY:mainCRTStartup")
   endif()
-  target_link_libraries(OAC  glcpp test py)
+#   target_link_libraries(OAC  glcpp test py)
+target_link_libraries(OAC  glcpp test )
 elseif(WIN32)
     target_compile_options(OAC  PRIVATE -Wall -Werror -std=c++17 -static)
     target_link_libraries(OAC  glcpp)
     target_include_directories(OAC  PUBLIC ./)
 else()
-    target_link_libraries(OAC  glcpp test py)
+# target_link_libraries(OAC  glcpp test py)
+    target_link_libraries(OAC  glcpp test)
 endif()
 
 message("==========================================================")
+
+if(APPLE)
+    # Set the resource files to be included in the bundle
+    set(RESOURCE_DIRECTORIES
+        resources
+    )
+    set(RESOURCE_FILES
+        imgui.ini
+        LICENSE
+    )
+
+
+    # Copy resource files to the binary directory
+    foreach(resource_file ${RESOURCE_DIRECTORIES})
+        add_custom_command(TARGET OAC POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/../Resources/${resource_file})
+    endforeach()
+
+    foreach(resource_file ${RESOURCE_FILES})
+        file(COPY ${CMAKE_SOURCE_DIR}/${resource_file} DESTINATION $<TARGET_FILE_DIR:OAC>/../Resources/)
+    endforeach()
+
+
+    # Set macOS bundle properties
+    set_target_properties(OAC PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/Info.plist  # Provide your Info.plist file
+    )
+
+        # Disable code signing for the entire project
+    set_target_properties(OAC PROPERTIES
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+    )
+    
+    # Set release build type and enable optimizations
+    set(CMAKE_BUILD_TYPE Release)
+endif()

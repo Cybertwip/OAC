@@ -190,10 +190,19 @@ namespace ui
             window_flags |= ImGuiWindowFlags_NoScrollWithMouse;
         }
 
+		window_flags |= ImGuiWindowFlags_NoTitleBar;
+
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		
+		ImGui::SetNextWindowClass(&window_class);
 
         ImGui::Begin(ICON_MD_SCHEDULE " Playback", 0, window_flags);
         {
  
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.0f, 0.0f));
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(1.0f, 0.0f));
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(1.0f, 0.0f));
 			ImGui::BeginTabBar("MyTabs", ImGuiTabBarFlags_None);
 			
 			
@@ -342,6 +351,11 @@ namespace ui
 			
 			
 			ImGui::EndTabBar();
+			
+			ImGui::PopStyleVar();
+			ImGui::PopStyleVar();
+			ImGui::PopStyleVar();
+
 		}
         ImGui::End();
 		

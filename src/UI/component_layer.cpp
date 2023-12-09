@@ -3,6 +3,7 @@
 #include "scene/scene.hpp"
 #include "imgui_helper.h"
 #include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
 #include <entity/entity.h>
 #include <entity/components/renderable/mesh_component.h>
 #include <entity/components/animation_component.h>
@@ -21,24 +22,29 @@ namespace ui
         Entity *entity = scene->get_mutable_selected_entity();
         SharedResources *resources = scene->get_mutable_ref_shared_resources().get();
 
+		ImGuiWindowClass window_class;
+		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+		
+		ImGui::SetNextWindowClass(&window_class);
+
         if (ImGui::Begin("Component"))
         {
             if (entity)
             {
-                if (ImGui::CollapsingHeader("Transform"))
+                if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_Bullet))
                 {
                     draw_transform(entity);
                     ImGui::Separator();
                 }
                 if (auto root = entity->get_mutable_root(); root)
                 {
-                    if (auto animation = root->get_component<AnimationComponent>(); animation && ImGui::CollapsingHeader("Animation"))
+                    if (auto animation = root->get_component<AnimationComponent>(); animation && ImGui::CollapsingHeader("Animation", ImGuiTreeNodeFlags_Bullet))
                     {
                         draw_animation(context, resources, root, animation);
                         ImGui::Separator();
                     }
                 }
-                if (auto mesh = entity->get_component<anim::MeshComponent>(); mesh && ImGui::CollapsingHeader("Mesh"))
+                if (auto mesh = entity->get_component<anim::MeshComponent>(); mesh && ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_Bullet))
                 {
                     draw_mesh(mesh);
                 }
@@ -92,13 +98,13 @@ namespace ui
 
             ImGui::EndChild();
         }
-        if(ImGui::Button("SMPL -> Mixamo")) {
+        if(ImGui::Button("Duplicate")) {
             context.is_clicked_retargeting = true;
         }
         auto animc = const_cast<AnimationComponent *>(animation);
         auto anim = animc->get_mutable_animation();
-        ImGui::Text("duration: %f", anim->get_duration());
-        ImGui::Text("fps: %f", anim->get_fps());
+//        ImGui::Text("duration: %f", anim->get_duration());
+//        ImGui::Text("fps: %f", anim->get_fps());
         float &fps = animc->get_mutable_custom_tick_per_second();
         if (animation_idx != context.current_animation_idx)
         {
