@@ -93,9 +93,6 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 		});
 		
 		LOG("Found node: " + name_bone.first + " : " + std::to_string(limb != limbs.end()));
-		
-		
-
 
 		if (limb != limbs.end())
 		{

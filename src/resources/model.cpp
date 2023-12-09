@@ -111,11 +111,11 @@ namespace anim
         // process vertex
 		auto points = geometry->getPointsDeformed();
 		auto normals = geometry->getNormals();
+		auto vertexIndices = geometry->getIndices();
 
         for (unsigned int i = 0; i < points.size(); i++)
         {
 			auto& point = points[i];
-			
 			
             Vertex vertex;
             vertex.set_position(SfbxVecToGlmVec(point));
@@ -126,10 +126,7 @@ namespace anim
 
                 vertex.set_normal(SfbxVecToGlmVec(normal));
             }
-//            if (mesh->mTextureCoords[0])
-//            {
-//                vertex.set_texture_coords(glm::vec2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
-//            }
+
 //            if (mesh->mTangents)
 //            {
 //                vertex.set_tangent(glm::vec3{
@@ -143,6 +140,21 @@ namespace anim
 
             vertices.push_back(vertex);
         }
+		
+		auto counts = geometry->getCounts();
+		
+		auto uvLayers = geometry->getUVLayers();
+		for (auto& uvLayer : uvLayers)
+		{
+			for(int i = 0; i<vertexIndices.size(); ++i){
+				int index = counts[vertexIndices[i]];
+				
+				vertices[index].set_texture_coords({uvLayer.data[index].x,
+					uvLayer.data[index].y});
+			}
+			
+		}
+
 
         process_bone(mesh, doc, vertices);
 
@@ -175,16 +187,15 @@ namespace anim
 			mat_properties.specular.z = color.z;
 
 			mat_properties.shininess = material->getShininess();
-
 			
-//			std::vector<Texture> diffuseMaps = load_material_textures(material, scene, aiTextureType_DIFFUSE, "texture_diffuse");
-//			
-//			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-//			
-//			if (diffuseMaps.size() > 0)
-//			{
-//				mat_properties.has_diffuse_texture = true;
-//			}
+			std::vector<Texture> diffuseMaps = load_material_textures(material, "DiffuseColor");
+
+			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+			if (diffuseMaps.size() > 0)
+			{
+				mat_properties.has_diffuse_texture = true;
+			}
 
 
 		}
@@ -270,26 +281,24 @@ namespace anim
 					float weight = weights[weight_idx];
 					
 					assert(static_cast<size_t>(vertex_id) <= vertices.size());
-					vertices[vertex_id].set_bone(bone_id, 1);
+					vertices[vertex_id].set_bone(bone_id, weight);
 				}
 			}
 		}
 		
     }
 
-    std::vector<Texture> Model::load_material_textures(aiMaterial *mat, const aiScene *scene, aiTextureType type,
-                                                       std::string typeName)
+    std::vector<Texture> Model::load_material_textures(std::shared_ptr<sfbx::Material> mat,   std::string typeName)
     {
-        LOG("LoadMaterialTextures: " + std::to_string((int)type) + " " + std::to_string(mat->GetTextureCount(type)));
+//        LOG("LoadMaterialTextures: " + std::to_string((int)type) + " " + std::to_string(mat->GetTextureCount(type)));
         std::vector<Texture> textures;
-        for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+//        for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+		if(auto materialTexture = mat->getTexture(typeName); materialTexture)
         {
-            aiString str;
-            mat->GetTexture(type, i, &str);
             bool skip = false;
             for (unsigned int j = 0; j < textures_loaded_.size(); j++)
             {
-                if (std::strcmp(textures_loaded_[j].path.data(), str.C_Str()) == 0)
+                if (textures_loaded_[j].path.compare( materialTexture->getFilename()) == 0)
                 {
                     textures.push_back(textures_loaded_[j]);
                     skip = true;
@@ -299,9 +308,9 @@ namespace anim
             if (!skip)
             { // if texture hasn't been loaded already, load it
                 Texture texture;
-                texture.id = TextureFromFile(str.C_Str(), directory_, scene);
+                texture.id = TextureFromFile(materialTexture->getFilename(), directory_, materialTexture);
                 texture.type = typeName;
-                texture.path = std::string(str.C_Str());
+                texture.path = std::string{materialTexture->getFilename()};
                 textures.push_back(texture);
                 textures_loaded_.push_back(texture); // add to loaded textures
             }
@@ -309,11 +318,12 @@ namespace anim
         return textures;
     }
 
-    unsigned int TextureFromFile(const char *path, const std::filesystem::path &directory, const aiScene *scene)
+    unsigned int TextureFromFile(const std::string_view path, const std::filesystem::path &directory, const std::shared_ptr<sfbx::Texture> materialTexture)
     {
-        LOG("TextureFromFile:: " + std::string(path));
+		std::string filename = std::string{path};
 
-        std::string filename(path);
+        LOG("TextureFromFile:: " + filename);
+
         size_t idx = filename.find_first_of("/\\");
         if (filename[0] == '.' || idx == 0)
         {
@@ -349,9 +359,9 @@ namespace anim
         }
         else
         {
-            if (auto texture = scene->GetEmbeddedTexture(path))
+            if (materialTexture->getEmbedded())
             {
-                LoadMemory(texture, &textureID);
+                LoadMemory(materialTexture, &textureID);
             }
             else
             {
@@ -363,7 +373,7 @@ namespace anim
         return textureID;
     }
 
-    void LoadMemory(const aiTexture *texture, unsigned int *id)
+    void LoadMemory(const std::shared_ptr<sfbx::Texture> texture, unsigned int *id)
     {
         LOG("LoadMemory");
         if (!*id)
@@ -375,23 +385,14 @@ namespace anim
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         unsigned char *image_data = nullptr;
         int width = 0, height = 0, components_per_pixel;
-        if (texture->mHeight == 0)
-        {
-            image_data = stbi_load_from_memory(reinterpret_cast<unsigned char *>(texture->pcData),
-                                               texture->mWidth,
-                                               &width,
-                                               &height,
-                                               &components_per_pixel,
-                                               0);
-        }
-        else
-        {
-            image_data = stbi_load_from_memory(reinterpret_cast<unsigned char *>(texture->pcData),
-                                               texture->mWidth * texture->mHeight,
-                                               &width,
-                                               &height,
-                                               &components_per_pixel, 0);
-        }
+        
+		image_data = stbi_load_from_memory(texture->getData().data(),
+			 texture->getData().size(),
+			 &width,
+			 &height,
+			 &components_per_pixel,
+			 0);
+        
 
         if (components_per_pixel == 3)
         {

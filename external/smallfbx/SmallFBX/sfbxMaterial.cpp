@@ -2,6 +2,10 @@
 #include "sfbxMaterial.h"
 #include "sfbxDocument.h"
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+
 namespace {
 	const std::string kEmbeddedToken = "*";
 
@@ -34,6 +38,10 @@ std::string_view Video::getFilename() const {
 	return m_filename;
 }
 
+const std::vector<uint8_t>& Video::getData() const {
+	return m_data;
+}
+
 void Video::importFBXObjects()
 {
 	super::importFBXObjects();
@@ -52,6 +60,8 @@ void Video::importFBXObjects()
 				
 		if(child->getName() == "Content"){
 			isEmbedded = true;
+			auto content = child->getProperty(0)->getString();
+			m_data = std::vector<uint8_t>(content.begin(), content.end()) ;
 		}
 
 	}
@@ -78,6 +88,26 @@ void Video::importFBXObjects()
 	
 	m_embedded = isEmbedded;
 	m_filename = embeddedFilename;
+	
+	if(!m_embedded){
+		// Open the file in binary mode
+		std::ifstream file(m_filename, std::ios::binary);
+		
+		// Check if the file is successfully opened
+		if (file.is_open()) {
+			// Read the file contents into a vector<uint8_t>
+			m_data = std::vector<uint8_t>(
+										  (std::istreambuf_iterator<char>(file)),
+										  std::istreambuf_iterator<char>()
+										  );
+			
+			// Close the file
+			file.close();
+			
+		} else {
+			std::cerr << "Error opening file: " << m_filename << std::endl;
+		}
+	}
 }
 
 
@@ -97,14 +127,28 @@ void Video::exportFBXObjects()
 ObjectClass Texture::getClass() const { return ObjectClass::Texture; }
 
 
+bool Texture::getEmbedded() const {
+	return m_embedded;
+}
+
+std::string_view Texture::getFilename() const {
+	return m_filename;
+}
+
+const std::vector<uint8_t>& Texture::getData() const {
+	return m_data;
+}
+
 void Texture::importFBXObjects()
 {
 	super::importFBXObjects();
 	// todo
 	
-	auto video = find_if(m_children, [](ObjectPtr ptr){
+	auto filter = find_if(m_children, [](ObjectPtr ptr){
 		return sfbx::as<Video>(ptr);
 	});
+	
+	auto video = sfbx::as<Video>(filter);
 	
 	bool hasVideo = false;
 	
@@ -113,8 +157,9 @@ void Texture::importFBXObjects()
 	if(video){
 		hasVideo = true;
 		
-		embeddedFilename = sfbx::as<Video>(video)->getFilename();
-
+		m_embedded = video->getEmbedded();
+		
+		m_filename = video->getFilename();
 	}
 	
 	
@@ -122,9 +167,15 @@ void Texture::importFBXObjects()
 		if(child->getName() == "FileName" || child->getName() == "RelativeFilename"){
 			
 			if(hasVideo){
-				if(sfbx::as<Video>(video)->getEmbedded()){
-					child->getProperty(0)->assign(embeddedFilename);
+				if(m_embedded){
+					child->getProperty(0)->assign(m_filename);
 				}
+			}
+		}
+		
+		if(child->getName() == "FileName"){
+			if(!m_embedded){
+				m_filename = child->getProperty(0)->getString();
 			}
 		}
 
@@ -135,6 +186,32 @@ void Texture::importFBXObjects()
 		mChildStreams.push_back(std::move(stream));
 	}
 	
+	
+	if(m_embedded){
+		m_data = video->getData();
+	} else {
+		if(hasVideo){
+			m_data = video->getData();
+		} else {
+			// Open the file in binary mode
+			std::ifstream file(m_filename, std::ios::binary);
+			
+			// Check if the file is successfully opened
+			if (file.is_open()) {
+				// Read the file contents into a vector<uint8_t>
+				m_data = std::vector<uint8_t>(
+											   (std::istreambuf_iterator<char>(file)),
+											   std::istreambuf_iterator<char>()
+											   );
+				
+				// Close the file
+				file.close();
+
+			} else {
+				std::cerr << "Error opening file: " << m_filename << std::endl;
+			}
+		}
+	}
 }
 
 void Texture::exportFBXObjects()
@@ -181,6 +258,10 @@ float64 Material::getShininess() const
 	return m_shininess;
 }
 
+std::shared_ptr<sfbx::Texture> Material::getTexture(const std::string& textureType){
+	return m_textures[textureType];
+}
+
 void Material::importFBXObjects()
 {
     super::importFBXObjects();
@@ -220,6 +301,11 @@ void Material::importFBXObjects()
 		child->writeAscii(stream);
 		
 		mChildStreams.push_back(std::move(stream));
+	}
+	
+	
+	for(std::size_t i = 0; i<m_child_property_names.size(); ++i){
+		m_textures[m_child_property_names[i]] = sfbx::as<sfbx::Texture>(m_children[i]);
 	}
 }
 

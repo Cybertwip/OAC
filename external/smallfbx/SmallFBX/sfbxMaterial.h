@@ -2,6 +2,7 @@
 #include "sfbxObject.h"
 
 #include <sstream>
+#include <vector>
 
 namespace sfbx {
 
@@ -17,6 +18,7 @@ public:
 	
 	bool getEmbedded() const;
 	std::string_view getFilename() const;
+	const std::vector<uint8_t>& getData() const;
 	
 protected:
 	void importFBXObjects() override;
@@ -27,6 +29,7 @@ private:
 	
 	bool m_embedded;
 	std::string m_filename;
+	std::vector<uint8_t> m_data;
 };
 
 class Texture : public Object
@@ -35,6 +38,11 @@ using super = Object;
 public:
     ObjectClass getClass() const override;
 
+	
+	bool getEmbedded() const;
+	std::string_view getFilename() const;
+	const std::vector<uint8_t>& getData() const;
+
 protected:
 	void importFBXObjects() override;
 	void exportFBXObjects() override;
@@ -42,6 +50,11 @@ protected:
 
 private:
 	std::vector<std::stringstream> mChildStreams;
+	
+	bool m_embedded;
+	std::string m_filename;
+	std::vector<uint8_t> m_data;
+
 };
 
 class Material : public Object
@@ -54,7 +67,9 @@ public:
 	double3 getDiffuseColor() const;
 	double3 getSpecularColor() const;
 	float64 getShininess() const;
-
+	
+	std::shared_ptr<sfbx::Texture> getTexture(const std::string& textureType);
+	
 protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
@@ -67,6 +82,8 @@ private:
 	float64 m_shininess;
 	
 	std::vector<std::stringstream> mChildStreams;
+	
+	std::unordered_map<std::string, std::shared_ptr<sfbx::Texture>> m_textures;
 };
 
 

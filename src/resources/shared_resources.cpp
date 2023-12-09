@@ -236,7 +236,7 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	ArmatureComponent *parent_armature = (parent_entity) ? parent_entity->get_component<ArmatureComponent>() : nullptr;
 	auto bone_info = model->get_pointer_bone_info(name);
 	auto bind_pose_transformation = model_node->relative_transformation;
-	//entity->set_local(bind_pose_transformation);
+//	entity->set_local(bind_pose_transformation);
 	
 	PoseComponent *parent_pose = (parent_armature) ? parent_armature->get_pose() : nullptr;
 	if (parent_armature && !bone_info)
@@ -295,6 +295,7 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 		armature->set_entity(entity.get());
 		armature->set_name(name);
 		armature->set_bone_id(bone_info->id);
+//		armature->set_bone_offset(glm::inverse(glm::inverse(parent_offset) * bind_pose_transformation));
 		armature->set_bone_offset(glm::inverse(glm::inverse(parent_offset) * bind_pose_transformation));
 		armature->set_bind_pose(bind_pose_transformation);
 		armature->set_shader(shaders_["armature"].get());

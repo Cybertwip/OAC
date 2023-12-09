@@ -63,9 +63,9 @@ void main()
     vec3 mat_diffuse = material.diffuse;
 
     if(material.has_diffuse_texture) {
-        if(texture_color.a <= 0.8) {
-            discard;
-        }
+        // if(texture_color.a <= 0.8) {
+        //     discard;
+        // }
         mat_diffuse = texture_color.rgb;
     }
 

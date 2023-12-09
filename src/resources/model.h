@@ -21,8 +21,8 @@ namespace anim
 {
     class Mesh;
     // can't load "../"
-    unsigned int TextureFromFile(const char *path, const std::filesystem::path &directory, const aiScene *scene);
-    void LoadMemory(const aiTexture *texture, unsigned int *id);
+    unsigned int TextureFromFile(const std::string_view path, const std::filesystem::path &directory, const std::shared_ptr<sfbx::Texture> materialTexture);
+    void LoadMemory(const std::shared_ptr<sfbx::Texture> texture, unsigned int *id);
     struct BoneInfo
     {
         /*id is index in finalBoneMatrices*/
@@ -116,8 +116,7 @@ namespace anim
 
         // void process_armature(const std::shared_ptr<ModelNode> &model_node, std::shared_ptr<ArmatureNode> &armature, ArmatureNode *parent_armature, int child_num);
 
-        std::vector<Texture> load_material_textures(aiMaterial *mat, const aiScene *scene, aiTextureType type,
-                                                    std::string typeName);
+		std::vector<Texture> load_material_textures(std::shared_ptr<sfbx::Material> mat,   std::string typeName);
         std::shared_ptr<ModelNode> root_node_;
         std::unordered_map<std::string, BoneInfo> bone_info_map_;
         std::filesystem::path directory_{};

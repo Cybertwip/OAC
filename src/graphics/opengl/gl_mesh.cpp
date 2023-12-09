@@ -112,8 +112,10 @@ namespace anim::gl
 			// retrieve texture number (the N in diffuse_textureN)
 			std::string number;
 			std::string name = textures_[i].type;
-			if (name == "texture_diffuse")
+			if (name == "DiffuseColor"){
+				name = "texture_diffuse";
 				number = std::to_string(diffuseNr++);
+			}
 			else if (name == "texture_specular")
 				number = std::to_string(specularNr++); // transfer unsigned int to string
 			else if (name == "texture_normal")
