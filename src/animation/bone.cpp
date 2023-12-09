@@ -11,69 +11,6 @@
 namespace anim
 {
 Bone::Bone() = default;
-Bone::Bone(const std::string &name, const aiNodeAnim *channel, const glm::mat4 &inverse_binding_pose)
-: name_(name),
-local_transform_(1.0f)
-{
-	set_bindpose(glm::inverse(inverse_binding_pose));
-	int num_positions = channel->mNumPositionKeys;
-	int num_rotations = channel->mNumRotationKeys;
-	int num_scales = channel->mNumScalingKeys;
-	// push position
-	for (int pos_idx = 0; pos_idx < num_positions; ++pos_idx)
-	{
-		aiVector3D aiPosition = channel->mPositionKeys[pos_idx].mValue;
-		float time = channel->mPositionKeys[pos_idx].mTime;
-		push_position(AiVecToGlmVec(aiPosition), time);
-	}
-	
-	// push rotation
-	for (int rot_idx = 0; rot_idx < num_rotations; ++rot_idx)
-	{
-		aiQuaternion aiOrientation = channel->mRotationKeys[rot_idx].mValue;
-		float time = channel->mRotationKeys[rot_idx].mTime;
-		
-		auto rotationQuaternion = AiQuatToGlmQuat(aiOrientation);
-		
-		push_rotation(rotationQuaternion, time);
-	}
-	
-	// push scaling
-	for (int scale_idx = 0; scale_idx < num_scales; ++scale_idx)
-	{
-		aiVector3D scale = channel->mScalingKeys[scale_idx].mValue;
-		float time = channel->mScalingKeys[scale_idx].mTime;
-		push_scale(AiVecToGlmVec(scale), time);
-	}
-	
-	// unbind bind pose
-	for (auto time : time_set_)
-	{
-		auto t = positions_.find(time);
-		auto r = rotations_.find(time);
-		auto s = scales_.find(time);
-		glm::vec3 tt = (t != positions_.end()) ? t->second.position : glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::quat rr = (r != rotations_.end()) ? r->second.orientation : glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-		glm::vec3 ss = (s != scales_.end()) ? s->second.scale : glm::vec3(1.0f, 1.0f, 1.0f);
-		glm::mat4 transformation = glm::translate(glm::mat4(1.0f), tt) * glm::toMat4(glm::normalize(rr)) * glm::scale(glm::mat4(1.0f), ss);
-		transformation = inverse_binding_pose * transformation;
-		
-		auto [translation, rotation, scale] = DecomposeTransform(transformation);
-		if (t != positions_.end())
-		{
-			t->second.position = translation;
-		}
-		if (r != rotations_.end())
-		{
-			r->second.orientation = rotation;
-		}
-		if (s != scales_.end())
-		{
-			s->second.scale = scale;
-		}
-	}
-}
-
 Bone::Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose)
 : name_(name),
 local_transform_(1.0f)
@@ -284,68 +221,6 @@ void Bone::get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCur
 		scaleCurveNode->addValue(0, sfbx::float3{ s.x, s.y, s.z });
 	}	
 }
-void Bone::get_ai_node(aiNodeAnim *channel, const aiMatrix4x4 &binding_pose_transform, float factor, bool is_interpolated)
-{
-	channel->mNodeName = aiString(name_);
-	
-	std::vector<aiVectorKey> pos_keys;
-	std::vector<aiQuatKey> rot_keys;
-	std::vector<aiVectorKey> scl_keys;
-	
-	std::map<float, glm::mat4> transform_map;
-	transform_map[0.0f] = glm::mat4(1.0f);
-	for (auto time : time_set_)
-	{
-		float timestamp = float(int(time * factor));
-		transform_map[timestamp] = get_local_transform(timestamp, factor); // transformation;
-	}
-	
-	if (is_interpolated)
-	{
-		float duration = *time_set_.rbegin();
-		float anim_time = 0.0f;
-		std::map<float, glm::mat4> new_transform_map;
-		auto before_transform = glm::mat4(1.0f);
-		for (auto &t_mp : transform_map)
-		{
-			for (; anim_time < t_mp.first; anim_time += 1.0f)
-			{
-				new_transform_map[anim_time] = get_local_transform(anim_time, factor);
-			}
-			before_transform = new_transform_map[t_mp.first] = t_mp.second;
-			anim_time = t_mp.first + 1.0f;
-		}
-		transform_map = new_transform_map;
-	}
-	
-	for (auto &transform : transform_map)
-	{
-		auto transformation = AiMatToGlmMat(binding_pose_transform) * transform.second;
-		auto [t, r, s] = DecomposeTransform(transformation);
-		
-		pos_keys.push_back(aiVectorKey(transform.first, GlmVecToAiVec(t)));
-		rot_keys.push_back(aiQuatKey(transform.first, GlmQuatToAiQuat(r)));
-		scl_keys.push_back(aiVectorKey(transform.first, GlmVecToAiVec(s)));
-	}
-	channel->mNumPositionKeys = pos_keys.size(); // positions_.size();
-	channel->mNumRotationKeys = rot_keys.size(); // rotations_.size();
-	channel->mNumScalingKeys = scl_keys.size();  // scales_.size();
-	
-	channel->mPositionKeys = new aiVectorKey[channel->mNumPositionKeys];
-	channel->mRotationKeys = new aiQuatKey[channel->mNumRotationKeys];
-	channel->mScalingKeys = new aiVectorKey[channel->mNumScalingKeys];
-	
-	for (int i = 0; i < pos_keys.size(); i++)
-	{
-		channel->mPositionKeys[i].mValue = pos_keys[i].mValue;
-		channel->mPositionKeys[i].mTime = pos_keys[i].mTime;
-		channel->mRotationKeys[i].mValue = rot_keys[i].mValue;
-		channel->mRotationKeys[i].mTime = rot_keys[i].mTime;
-		channel->mScalingKeys[i].mValue = scl_keys[i].mValue;
-		channel->mScalingKeys[i].mTime = scl_keys[i].mTime;
-	}
-}
-
 void Bone::set_name(const std::string &name)
 {
 	name_ = name;

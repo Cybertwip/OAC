@@ -4,8 +4,6 @@
 #include "bone.h"
 // #include "retargeter.h"
 
-#include <assimp/scene.h>
-
 #include <string>
 #include <map>
 #include <filesystem>
@@ -47,7 +45,6 @@ public:
 	const AnimationType &get_type() const;
 	virtual void reload();
 	void get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx::AnimationLayer* animationLayer, float factor, bool is_linear);
-	void get_ai_animation(aiAnimation *ai_anim, const aiNode *ai_root_node, float factor = 1.0, bool is_linear = true);
 	void set_id(int id);
 	const int get_id() const;
 	void add_and_replace_bone(const std::string &name, const glm::mat4 &transform, float time);

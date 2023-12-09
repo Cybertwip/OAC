@@ -186,28 +186,6 @@ namespace anim
         }
     }
 
-    void Exporter::to_ai_node(aiNode *ai_node, Entity *entity, aiNode *parent_ai_node)
-    {
-        auto &childrens = entity->get_mutable_children();
-        auto armature = entity->get_component<ArmatureComponent>();
-        glm::mat4 transform = entity->get_local();
-        if (armature)
-        {
-            transform = armature->get_bindpose();
-        }
-
-        ai_node->mName = aiString(entity->get_name().c_str());
-        ai_node->mTransformation = GlmMatToAiMat(transform);
-        ai_node->mParent = parent_ai_node;
-        ai_node->mNumChildren = childrens.size();
-        ai_node->mChildren = new aiNode *[ai_node->mNumChildren];
-
-        for (unsigned int i = 0; i < ai_node->mNumChildren; i++)
-        {
-            ai_node->mChildren[i] = new aiNode();
-            to_ai_node(ai_node->mChildren[i], childrens[i].get(), ai_node);
-        }
-    }
     void init_name(Entity *entity, Json::Value &name_list)
     {
         name_list.append(entity->get_name());

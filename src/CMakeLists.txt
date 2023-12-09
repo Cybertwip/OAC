@@ -17,7 +17,7 @@ if(MSVC)
   if (CMAKE_BUILD_TYPE MATCHES Release)
     target_link_options(glcpp PUBLIC "/INCREMENTAL" "/SUBSYSTEM:windows" "/ENTRY:mainCRTStartup")
  endif()
-  target_link_libraries(glcpp PUBLIC ${LIBs} glm assimp::assimp)
+  target_link_libraries(glcpp PUBLIC ${LIBs} glm)
   target_include_directories(glcpp PUBLIC ./ ./glcpp ../ ${CMAKE_HOME_DIRECTORY}/external)
 
 
@@ -25,12 +25,12 @@ elseif(WIN32)
     target_compile_options(glcpp PRIVATE -Wall -Werror -std=c++17 -static)
 
     target_include_directories(glcpp PUBLIC ./ ./glcpp ../ ${CMAKE_HOME_DIRECTORY}/external)
-    target_link_libraries(glcpp PUBLIC ${LIBs} assimp::assimp glm -lpthread -lgdi32 -lopengl32 -static)
+    target_link_libraries(glcpp PUBLIC ${LIBs} glm -lpthread -lgdi32 -lopengl32 -static)
 else()
     target_compile_options(glcpp PRIVATE -Wall -Werror -std=c++17)
 
     target_include_directories(glcpp PUBLIC ./ ./glcpp ../ ${CMAKE_HOME_DIRECTORY}/external)
-    target_link_libraries(glcpp PUBLIC ${LIBs} assimp glm::glm -ldl -lpthread)
+    target_link_libraries(glcpp PUBLIC ${LIBs} glm::glm -ldl -lpthread)
 endif()
 
 message("==========================================================")
@@ -106,7 +106,7 @@ add_library(test STATIC ${test_src})
 if(MSVC)
 target_compile_options(test PUBLIC  "/utf-8")
 endif()
-target_link_libraries(test PUBLIC ${LIBs} glm assimp::assimp)
+target_link_libraries(test PUBLIC ${LIBs} glm)
 target_include_directories(test PUBLIC ./
  ./entity/
   ./entity/components/

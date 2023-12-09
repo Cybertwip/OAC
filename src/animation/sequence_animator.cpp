@@ -11,8 +11,6 @@
 #include "json_animation.h"
 #include "assimp_animation.h"
 
-#include <assimp/scene.h>
-#include <assimp/Importer.hpp>
 
 namespace anim
 {

@@ -1,7 +1,4 @@
 #include "importer.h"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include <filesystem>
 #include "../entity/entity.h"
 #include "../animation/json_animation.h"

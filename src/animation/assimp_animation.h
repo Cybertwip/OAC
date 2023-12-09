@@ -3,7 +3,6 @@
 
 #include "animation.h"
 #include <glm/glm.hpp>
-#include <assimp/scene.h>
 
 #include <functional>
 #include <vector>

@@ -2,7 +2,6 @@
 #define ANIM_ANIMATION_BONE_H
 
 #include <vector>
-#include <assimp/scene.h>
 #include <list>
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -51,9 +50,7 @@ namespace anim
     class Bone
     {
     public:
-        Bone();
-		Bone(const std::string &name, const aiNodeAnim *channel, const glm::mat4 &inverse_binding_pose);
-		
+        Bone();		
 		Bone(const std::string &name, sfbx::AnimationCurveNode* positionCurve, sfbx::AnimationCurveNode* rotationCurve, sfbx::AnimationCurveNode* scaleCurve, const glm::mat4 &inverse_binding_pose);
 
 		
@@ -65,8 +62,6 @@ namespace anim
         float get_factor();
 		void get_fbx_node(sfbx::Model* limb, sfbx::AnimationCurveNode* positionCurveNode, sfbx::AnimationCurveNode* rotationCurveNode, sfbx::AnimationCurveNode* scaleCurveNode, float factor = 1.0, bool is_interpolated = true);
 		
-        void get_ai_node(aiNodeAnim *channel, const aiMatrix4x4 &binding_pose_transform, float factor = 1.0, bool is_interpolated = true);
-
         void set_name(const std::string &name);
         void set_bindpose(const glm::mat4 &bindpose);
         /**
