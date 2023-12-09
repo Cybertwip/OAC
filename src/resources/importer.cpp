@@ -49,6 +49,7 @@ namespace anim
 				LOG("ERROR::IMPORTER: INVALID FBX");
 			}
 
+			model->set_unit_scale(doc->global_settings.unit_scale);
 
         }
         catch (std::exception &e)

@@ -461,4 +461,12 @@ namespace anim
     {
         return name_;
     }
+
+	void Model::set_unit_scale(float scale){
+		unit_scale_ = scale;
+	}
+
+	const float Model::get_unit_scale()	const{
+		return unit_scale_;
+	}
 }

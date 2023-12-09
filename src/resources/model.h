@@ -86,6 +86,10 @@ namespace anim
         std::shared_ptr<ModelNode> &get_mutable_root_node();
         
         const std::string &get_name() const;
+		
+		void set_unit_scale(float scale);
+		
+		const float get_unit_scale() const;
 
     private:
         void load_model(const std::string& path, const sfbx::DocumentPtr doc);
@@ -123,6 +127,8 @@ namespace anim
         std::string name_{};
         int bone_count_ = 0;
         int node_count_ = 0;
+		
+		float unit_scale_ = 1.0f;
     };
 }
 

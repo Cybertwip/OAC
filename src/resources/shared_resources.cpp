@@ -96,7 +96,7 @@ void SharedResources::add_entity(std::shared_ptr<Model> &model, const char *path
 		
 		auto [t, r, s] = DecomposeTransform(entity->get_local());
 		
-		s *= 100.0f;
+		s *= model->get_unit_scale();
 		
 		auto transformation = ComposeTransform(t, r, s);
 
