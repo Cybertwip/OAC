@@ -133,7 +133,15 @@ namespace ui
         DragPropertyXYZ("Translation", transform.mTranslation);
         DragPropertyXYZ("Rotation", transform.mRotation);
         DragPropertyXYZ("Scale", transform.mScale);
-        entity->set_local(transform.get_mat4());
+		
+		if(transform.get_mat4() != entity->get_local()){
+			entity->set_local(transform.get_mat4());
+			
+			if(auto component = entity->get_mutable_root()-> get_component<PoseComponent>(); component){
+				component->add_and_replace_bone(entity->get_name(), entity->get_local());
+			}
+
+		}
     }
     void ComponentLayer::draw_transform_reset_button(anim::TransformComponent &transform)
     {

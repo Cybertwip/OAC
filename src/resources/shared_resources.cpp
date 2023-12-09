@@ -215,10 +215,14 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	entity->set_root(root_entity);
 	single_entity_list_.push_back(entity);
 	
+	auto bind_pose_transformation = model_node->relative_transformation;
+
 	// mesh component
 	if (model_node->meshes.size() != 0)
 	{
 		auto mesh = entity->add_component<MeshComponent>();
+		mesh->set_bindpose(bind_pose_transformation);
+		
 		mesh->set_meshes(model_node->meshes);
 		mesh->set_shader(shaders_["model"].get());
 		mesh->set_entity(entity.get());
@@ -235,7 +239,6 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 	// find mising bone
 	ArmatureComponent *parent_armature = (parent_entity) ? parent_entity->get_component<ArmatureComponent>() : nullptr;
 	auto bone_info = model->get_pointer_bone_info(name);
-	auto bind_pose_transformation = model_node->relative_transformation;
 //	entity->set_local(bind_pose_transformation);
 	
 	PoseComponent *parent_pose = (parent_armature) ? parent_armature->get_pose() : nullptr;

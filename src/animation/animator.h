@@ -22,6 +22,7 @@ public:
 	void update(float dt);
 	void update_animation(AnimationComponent *animation, Entity *root, Shader *shader);
 	void calculate_bone_transform(Entity *entity, std::vector<std::shared_ptr<StackedAnimation>>& animationStack, const glm::mat4 &parentTransform);
+	void calculate_mesh_transform(Entity *entity, std::vector<std::shared_ptr<StackedAnimation>>& animationStack, const glm::mat4 &parentTransform);
 	const float get_current_time() const;
 	const float get_start_time() const;
 	const float get_end_time() const;

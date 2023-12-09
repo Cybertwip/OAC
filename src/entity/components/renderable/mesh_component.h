@@ -30,11 +30,16 @@ namespace anim
         void set_entity(Entity *entity);
 
         std::vector<MaterialProperties *> get_mutable_mat();
+		
+		glm::mat4& get_bindpose();
+		void set_bindpose(const glm::mat4& bindpose);
 
     private:
         std::vector<std::shared_ptr<Mesh>> meshes_;
         Shader *shader_;
         Entity *entity_;
+		
+		glm::mat4 bindpose_;
     };
 }
 

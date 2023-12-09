@@ -156,7 +156,7 @@ void Animation::add_and_replace_bone(const std::string &name, const glm::mat4 &t
 		bone = name_bone_map_[name].get();
 		bone->set_name(name);
 		bone->set_bindpose(name_bindpose_map_[name]);
-		bone->replace_or_add_keyframe(glm::mat4(1.0f), 0.0f);
+		bone->replace_or_add_keyframe(transform, time);
 	}
 }
 void Animation::sub_bone(const std::string &name, float time)

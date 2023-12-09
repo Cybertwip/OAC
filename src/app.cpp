@@ -190,9 +190,11 @@ void App::process_timeline_context()
 		auto selected_entity = scenes_[current_scene_idx_]->get_mutable_selected_entity();
 		auto &before_transform = selected_entity->get_local();
 		selected_entity->set_local(entity_context.new_transform);
-		if (auto armature = selected_entity->get_component<anim::ArmatureComponent>(); armature)
+		if (auto component = selected_entity->get_component<anim::PoseComponent>(); component)
 		{
-			armature->add_and_replace_bone();
+
+			component->add_and_replace_bone(selected_entity->get_name(), selected_entity->get_local());
+
 			if (count == 0u)
 			{
 				history_->push(std::make_unique<anim::BoneChangeEvent>(
@@ -201,7 +203,7 @@ void App::process_timeline_context()
 																	   selected_entity->get_id(),
 																	   selected_entity->get_mutable_root()->get_component<anim::AnimationComponent>()->get_animation()->get_id(),
 																	   before_transform,
-																	   armature->get_pose()->get_animator()->get_current_time()));
+																	   component->get_animator()->get_current_time()));
 			}
 			count++;
 		}
