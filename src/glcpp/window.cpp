@@ -52,6 +52,8 @@ namespace glcpp
             glfwTerminate();
             throw std::runtime_error("GLFW failed to create window");
         }
+		glfwMaximizeWindow(handle_);
+
         glfwMakeContextCurrent(handle_);
         // glad: load all OpenGL function pointers
         // ---------------------------------------
