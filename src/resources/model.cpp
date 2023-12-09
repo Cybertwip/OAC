@@ -141,17 +141,35 @@ namespace anim
             vertices.push_back(vertex);
         }
 		
+		
+		
 		auto counts = geometry->getCounts();
 		
 		auto uvLayers = geometry->getUVLayers();
+		int layerIndex = 0;
 		for (auto& uvLayer : uvLayers)
 		{
-			for(int i = 0; i<vertexIndices.size(); ++i){
-				int index = counts[vertexIndices[i]];
-				
-				vertices[index].set_texture_coords({uvLayer.data[index].x,
-					uvLayer.data[index].y});
+			// Here i map uv coordinates on a mesh
+			
+			for (int i = 0; i < vertexIndices.size(); i++) {
+				int index;
+				int uv_index = uvLayer.indices[i];
+				index = vertexIndices[i];
+
+				if(layerIndex == 0){
+					vertices[index].set_texture_coords1({uvLayer.data[uv_index].x,
+						uvLayer.data[uv_index].y});
+					vertices[index].set_texture_coords2({uvLayer.data[uv_index].x,
+						uvLayer.data[uv_index].y});
+
+				} else {
+					vertices[index].set_texture_coords2({uvLayer.data[uv_index].x,
+						uvLayer.data[uv_index].y});
+
+				}
 			}
+
+			layerIndex++;
 			
 		}
 

@@ -106,7 +106,8 @@ protected:
     void importFBXObjects() override;
     void exportFBXObjects() override;
 
-    RawVector<int> m_counts;
+	RawVector<int> m_counts;
+	RawVector<int> m_uv_counts;
     RawVector<int> m_indices;
 	RawVector<float3> m_points;
 	RawVector<float3> m_normals;

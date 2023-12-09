@@ -15,7 +15,8 @@ namespace anim
     {
         glm::vec3 position;
         glm::vec3 normal;
-        glm::vec2 tex_coords;
+		glm::vec2 tex_coords1;
+		glm::vec2 tex_coords2;
         glm::vec3 tangent;
         glm::vec3 bitangent;
         // bone indexes which will influence this vertex
@@ -24,7 +25,7 @@ namespace anim
         float weights[MAX_BONE_INFLUENCE];
 
         Vertex()
-            : tex_coords({0.0f, 0.0f})
+            : tex_coords1({0.0f, 0.0f}), tex_coords2({0.0f, 0.0f})
         {
             init_bone();
         }
@@ -66,10 +67,14 @@ namespace anim
         {
             normal = vec;
         }
-        void set_texture_coords(const glm::vec2 &vec)
-        {
-            tex_coords = vec;
-        }
+		void set_texture_coords1(const glm::vec2 &vec)
+		{
+			tex_coords1 = vec;
+		}
+		void set_texture_coords2(const glm::vec2 &vec)
+		{
+			tex_coords2 = vec;
+		}
         void set_tangent(const glm::vec3 &vec)
         {
             tangent = vec;

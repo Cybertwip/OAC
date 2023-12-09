@@ -88,6 +88,14 @@ namespace anim::gl
 	// TODO: delete buffer
 	GLMesh::~GLMesh()
 	{
+		glDeleteVertexArrays(1, &VAO_);
+		glDeleteBuffers(1, &VBO_);
+		
+		if (EBO_ != 0) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			glDeleteBuffers(1, &EBO_);
+		}
+
 	}
 	void GLMesh::draw(anim::Shader& shader)
 	{
@@ -149,55 +157,63 @@ namespace anim::gl
 	{
 		// draw mesh
 		glBindVertexArray(VAO_);
+		
 		if (indices_.size() > 0)
 		{
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
 			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices_.size()), GL_UNSIGNED_INT, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind the EBO immediately after the draw call
 		}
 		else
 		{
 			glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
 		}
+		
 		glBindVertexArray(0);
 	}
 	void GLMesh::init_buffer()
 	{
 		glGenVertexArrays(1, &VAO_);
 		glGenBuffers(1, &VBO_);
-
+		
 		glBindVertexArray(VAO_);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO_);
-
+		
 		glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(Vertex), &vertices_[0], GL_STATIC_DRAW);
-		if (indices_.size() > 0)
-		{
+		
+		if (indices_.size() > 0) {
 			glGenBuffers(1, &EBO_);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_.size() * sizeof(unsigned int),
-				&indices_[0], GL_STATIC_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_.size() * sizeof(unsigned int), &indices_[0], GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind the EBO
 		}
+		
+
 
 		glEnableVertexAttribArray(0);
-		// vertex position
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-		// vertex normals
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+		
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-		// vertex texture coords
+		
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords));
-
-		// vertex tangent
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords1));
+		
 		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-		// vertex bitangent
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords2));
+		
 		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
-		// ids
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+		
 		glEnableVertexAttribArray(5);
-		glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, bone_ids));
-		// weights
+		glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
+		
 		glEnableVertexAttribArray(6);
-		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
+		glVertexAttribIPointer(6, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, bone_ids));
+		
+		glEnableVertexAttribArray(7);
+		glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
+
 		glBindVertexArray(0);
 	}
 }

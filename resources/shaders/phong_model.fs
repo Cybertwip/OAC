@@ -3,7 +3,8 @@
 layout(location = 0) out vec4 FragColor;
 layout(location = 1) out int EntityID;
 
-in vec2 TexCoords;
+in vec2 TexCoords1;
+in vec2 TexCoords2;
 in vec3 Normal;
 in vec3 FragPos;
 flat in int boneId;
@@ -59,14 +60,12 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 mat_diffuse)
 
 void main()
 {   
-    vec4 texture_color = texture(texture_diffuse1, TexCoords);
+    vec4 texture_color1 = texture(texture_diffuse1, TexCoords1);
+    vec4 texture_color2 = texture(texture_diffuse1, TexCoords2);
     vec3 mat_diffuse = material.diffuse;
 
     if(material.has_diffuse_texture) {
-        // if(texture_color.a <= 0.8) {
-        //     discard;
-        // }
-        mat_diffuse = texture_color.rgb;
+        mat_diffuse = texture_color1.rgb * texture_color2.rgb;
     }
 
     vec3 viewPos =  vec3(inverse(view) * vec4(0.0, 0.0, 0.0, 1.0));
