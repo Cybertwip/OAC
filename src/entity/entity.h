@@ -44,6 +44,29 @@ namespace anim
         {
             return children_;
         }
+		
+		std::vector<std::shared_ptr<Entity>> get_children_recursive() {
+			// Clear the result vector before populating it
+			std::vector<std::shared_ptr<Entity>> result;
+			
+			// Start the recursive process
+			get_children_recursive_internal(result);
+			
+			return result;
+		}
+
+		void get_children_recursive_internal(std::vector<std::shared_ptr<Entity>>& result) {
+			// Add the immediate children of this entity to the result vector
+			std::vector<std::shared_ptr<Entity>> immediateChildren = get_mutable_children();
+			result.insert(result.end(), immediateChildren.begin(), immediateChildren.end());
+			
+			// Recursively call the function on each child
+			for (auto& child : immediateChildren) {
+				child->get_children_recursive_internal(result);
+			}
+		}
+		
+
         void set_world_transformation(const glm::mat4 &world)
         {
             world_ = world;

@@ -42,24 +42,15 @@ namespace anim
     {
 		std::vector<std::shared_ptr<sfbx::Mesh>> meshes;
 		std::vector<std::shared_ptr<sfbx::Model>> models;
-		std::vector<sfbx::ObjectPtr> filteredMeshes;
 		std::vector<sfbx::ObjectPtr> filteredModels;
 		
-		auto meshCondition = [](const sfbx::ObjectPtr& nodePtr) {
-			return std::dynamic_pointer_cast<sfbx::Mesh>(nodePtr) != nullptr;
-		};
 		auto modelCondition = [](const sfbx::ObjectPtr& nodePtr) {
 			return std::dynamic_pointer_cast<sfbx::Model>(nodePtr) != nullptr;
 		};
 
 		auto nodes = node->getChildren();
 		
-		std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filteredMeshes), meshCondition);
 		std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(filteredModels), modelCondition);
-		
-		for(auto& filteredObject : filteredMeshes){
-			meshes.push_back(std::dynamic_pointer_cast<sfbx::Mesh>(filteredObject));
-		}
 		
 		for(auto& filteredObject : filteredModels){
 			models.push_back(std::dynamic_pointer_cast<sfbx::Model>(filteredObject));
@@ -77,13 +68,12 @@ namespace anim
 //			 model_name,
 //		   	filteredModels.size()));
 		
-        for (unsigned int i = 0; i < meshes.size(); i++)
-        {
-			auto mesh = meshes[i];
-            model_node->meshes.emplace_back(process_mesh(mesh, doc));
+		if(auto mesh = std::dynamic_pointer_cast<sfbx::Mesh>(node); mesh){
+			model_node->meshes.emplace_back(process_mesh(mesh, doc));
 			
-            model_node->has_bone = mesh->getGeometry()->hasSkinDeformer();
-        }
+			model_node->has_bone = mesh->getGeometry()->hasSkinDeformer();
+
+		}
 
         for (unsigned int i = 0; i < filteredModels.size(); i++)
         {

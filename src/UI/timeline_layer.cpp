@@ -344,7 +344,7 @@ namespace ui
 				draw_animator_status(ui_context);
 				ImGui::BeginChild("##Timeline", ImVec2(0, 0), false, window_flags);
 				{
-					draw_sequencer(ui_context);
+					draw_sequencer(scene, ui_context);
 				}
 				ImGui::EndChild();
 				
@@ -457,7 +457,7 @@ namespace ui
         ImGui::PopItemWidth();
     }
 
-    void TimelineLayer::draw_sequencer(UiContext &ui_context)
+    void TimelineLayer::draw_sequencer(Scene *scene, UiContext &ui_context)
     {
         auto &context = ui_context.timeline;
         uint32_t current = static_cast<uint32_t>(animator_->get_current_time());
@@ -476,7 +476,7 @@ namespace ui
                 auto anim_component = root_entity_->get_component<AnimationComponent>();
                 if (anim_component && anim_component->get_animation())
                 {
-                    draw_keyframes(ui_context, anim_component->get_animation());
+                    draw_keyframes(scene, ui_context, anim_component->get_animation());
                 }
             }
             is_hovered_zoom_slider_ = false;
@@ -497,7 +497,7 @@ namespace ui
     }
 
     //TODO: Refactor drag logic
-    void TimelineLayer::draw_keyframes(UiContext &ui_context, const Animation *animation)
+    void TimelineLayer::draw_keyframes(Scene *scene, UiContext &ui_context, const Animation *animation)
     {
         static ImRect border{};
         static float mouse_wheel = 0.0f;
@@ -505,7 +505,7 @@ namespace ui
 
         auto &context = ui_context.timeline;
         auto &entity_context = ui_context.entity;
-
+		
         // for select keyframe
         ImGuiWindow *window = ImGui::GetCurrentWindow();
         ImGuiIO &io = ImGui::GetIO();
@@ -546,8 +546,38 @@ namespace ui
         {
             auto &name_bone_map = animation->get_name_bone_map();
             std::vector<std::pair<Bone*, float>> selected_bone_list;
+			
+			entity_ = scene->get_mutable_selected_entity();
+
+			std::vector<std::string> filteredChildren;
+			if(entity_){
+				filteredChildren.push_back(entity_->get_name());
+				
+				for(auto& entity_child : entity_->get_children_recursive()){
+					filteredChildren.push_back(entity_child->get_name());
+					
+				}
+			}
+
             for (auto &bone : name_bone_map)
             {
+				if(!entity_){
+					continue;
+				}
+				
+				bool isFiltered = false;
+				
+				for(auto& filtered : filteredChildren){
+					if(filtered.compare(bone.second->get_name()) == 0){
+						isFiltered = true;
+						break;
+					}
+				}
+				
+				if(!isFiltered){
+					continue;
+				}
+				
                 float factor = bone.second->get_factor();
                 auto &keys = bone.second->get_time_set();
                 const char *name = bone.second->get_name().c_str();

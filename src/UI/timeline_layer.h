@@ -35,8 +35,8 @@ namespace ui
         void draw_animator_status(UiContext &ui_context);
 
         // TODO: Fix neo sequencer error when start frame is not 0"
-        void draw_sequencer(UiContext &ui_context);
-        void draw_keyframes(UiContext &ui_context, const anim::Animation *animation);
+        void draw_sequencer(Scene *scene, UiContext &ui_context);
+        void draw_keyframes(Scene *scene, UiContext &ui_context, const anim::Animation *animation);
         void draw_keyframe_popup(UiContext &ui_context);
         bool draw_drag_popup();
 
