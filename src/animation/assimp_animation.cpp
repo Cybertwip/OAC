@@ -23,10 +23,23 @@ void FbxAnimation::init_animation(const sfbx::DocumentPtr doc, const std::shared
 	path_ = path;
 	fs::path anim_path = fs::u8path(path_);
 	name_ = anim_path.filename().string();
-	duration_ = 100;
-	fps_ = 60;
 	
 	process_bones(animationLayer.get(), doc->getRootModel().get());
+	
+	
+
+	float duration = 0.0f;
+	for (auto &name_bone : name_bone_map_)
+	{
+		
+		if(name_bone.second->get_time_set().size() > 0){
+			auto time_end = *std::next(name_bone.second->get_time_set().end(), -1);
+			duration = std::max(duration, time_end);
+		}
+	}
+	
+	duration_ = duration;
+	fps_ = 60;
 
 	process_bindpose(doc->getRootModel().get());
 }

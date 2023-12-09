@@ -140,16 +140,11 @@ namespace anim
 
             vertices.push_back(vertex);
         }
-		
-		
-		
-		auto counts = geometry->getCounts();
-		
+				
 		auto uvLayers = geometry->getUVLayers();
 		int layerIndex = 0;
 		for (auto& uvLayer : uvLayers)
 		{
-			// Here i map uv coordinates on a mesh
 			
 			for (int i = 0; i < vertexIndices.size(); i++) {
 				int index;
