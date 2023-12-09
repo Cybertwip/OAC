@@ -27,7 +27,7 @@ namespace ui
 		
 		ImGui::SetNextWindowClass(&window_class);
 
-        if (ImGui::Begin("Component"))
+        if (ImGui::Begin("Component", nullptr, ImGuiWindowFlags_NoMove))
         {
             if (entity)
             {

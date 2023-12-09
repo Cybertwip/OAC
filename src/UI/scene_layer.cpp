@@ -52,7 +52,7 @@ namespace ui
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
 
-        if (ImGui::Begin(title, 0, sceneWindowFlags | ImGuiWindowFlags_NoScrollbar))
+        if (ImGui::Begin(title, 0, sceneWindowFlags | ImGuiWindowFlags_NoScrollbar| ImGuiWindowFlags_NoMove))
         {
             scene_pos_ = ImGui::GetWindowPos();
             scene_cursor_y_ = ImGui::GetCursorPosY();

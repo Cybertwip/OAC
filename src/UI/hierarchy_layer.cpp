@@ -22,7 +22,7 @@ namespace ui
         {
             selected_id_ = selected_entity->get_id();
         }
-        ImGui::Begin("Hierarchy");
+        ImGui::Begin("Hierarchy", nullptr, ImGuiWindowFlags_NoMove);
         {
             if (entities)
             {

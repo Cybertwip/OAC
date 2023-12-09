@@ -191,7 +191,9 @@ namespace ui
         }
 
 		window_flags |= ImGuiWindowFlags_NoTitleBar;
-
+		window_flags |=
+		ImGuiWindowFlags_NoMove;
+		
 		ImGuiWindowClass window_class;
 		window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
 		
