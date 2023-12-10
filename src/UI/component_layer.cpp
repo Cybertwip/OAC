@@ -100,7 +100,7 @@ namespace ui
                     bool is_selected = (animations[idx]->get_id() == animation_idx);
                     if (ImGui::Selectable(name.c_str(), is_selected))
                     {
-                        animation_idx = idx;
+                        animation_idx = animations[idx]->get_id();
                     }
 					
 					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
