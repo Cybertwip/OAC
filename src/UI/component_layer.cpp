@@ -59,6 +59,7 @@ namespace ui
 			context.current_animation_idx = animation->get_animation()->get_id();
 		} else {
 			context.current_animation_idx = -1;
+			context.is_changed_animation = true;
 		}
         int animation_idx = context.current_animation_idx;
 
@@ -96,7 +97,7 @@ namespace ui
                 {
                     std::string name = std::to_string(idx) + ":" + animations[idx]->get_name();
 
-                    bool is_selected = (idx == animation_idx);
+                    bool is_selected = (animations[idx]->get_id() == animation_idx);
                     if (ImGui::Selectable(name.c_str(), is_selected))
                     {
                         animation_idx = idx;

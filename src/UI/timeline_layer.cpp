@@ -51,19 +51,25 @@ namespace ui
 			
 			const auto &animations = resources_->get_animations();
 
-			const auto& animation = animations[ui_context.component.current_animation_idx];
-			
-			bool existing = false;
-			for(auto& item : g_tracksSequencer.mItems){
-				if(item.mId == ui_context.component.current_animation_idx){
-					existing = true;
+			for(auto& animation : animations){
+				if(animation->get_id() == ui_context.component.current_animation_idx){
+
+					bool existing = false;
+
+					for(auto& item : g_tracksSequencer.mItems){
+						if(item.mId == ui_context.component.current_animation_idx){
+							existing = true;
+							break;
+						}
+					}
+					
+					if(!existing){
+						g_tracksSequencer.mItems.push_back({ui_context.component.current_animation_idx, animation->get_name(), 0, 0, (int)animation->get_duration()});
+					}
 					break;
 				}
 			}
 			
-			if(!existing){
-				g_tracksSequencer.mItems.push_back({ui_context.component.current_animation_idx, animation->get_name(), 0, 0, (int)animation->get_duration()});
-			}
 			
 		}
 
@@ -213,13 +219,17 @@ namespace ui
 				{
 					if (anim_component && anim_component->get_animation())
 					{
-						const auto& animation = animations[anim_component->get_animation()->get_id()];
-						
-						anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, 0, anim_component->get_mutable_animation()->get_duration()));
-
-						animator_->set_end_time(static_cast<float>(anim_component->get_mutable_animation()->get_duration()));
-						
-						ui_context.timeline.end_frame = static_cast<int>(animator_->get_end_time());
+						for(auto& animation : animations){
+							if(animation->get_id() == anim_component->get_animation()->get_id()){
+								
+								anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, 0, anim_component->get_mutable_animation()->get_duration()));
+								
+								animator_->set_end_time(static_cast<float>(anim_component->get_mutable_animation()->get_duration()));
+								
+								ui_context.timeline.end_frame = static_cast<int>(animator_->get_end_time());
+								break;
+								}
+						}
 					}
 				}
 
@@ -262,10 +272,15 @@ namespace ui
 		
 		if(ui_context.component.current_animation_idx != -1){
 			const auto &animations = resources_->get_animations();
-			
-			const auto& animation = animations[ui_context.component.current_animation_idx];
-			
-			context.end_frame = static_cast<int>(animation->get_duration());
+						
+			for(auto& animation : animations){
+				if(animation->get_id() == ui_context.component.current_animation_idx){
+					
+					context.end_frame = static_cast<int>(animation->get_duration());
+
+					break;
+				}
+			}
 		}
 		
         context.current_frame = static_cast<int>(animator_->get_current_time());
