@@ -283,7 +283,7 @@ void App::process_scene_context()
 
 void App::process_component_context()
 {
-	auto &ui_context = ui_->get_context();
+	auto &ui_context = const_cast<ui::UiContext&>(ui_->get_context());
 	auto &comp_context = ui_context.component;
 	if (comp_context.is_changed_animation)
 	{
@@ -293,8 +293,37 @@ void App::process_component_context()
 	if(comp_context.is_clicked_retargeting) {
 		auto pose_comp = scenes_[current_scene_idx_]->get_mutable_selected_entity()->get_mutable_root()->get_component<anim::PoseComponent>();
 		auto retargeter = anim::MixamoRetargeter();
-		shared_resources_->add_animation(retargeter.retarget(pose_comp));
+		
+		auto animation = retargeter.retarget(pose_comp);
+		
+		animation->set_owner(pose_comp->get_root_entity()->get_mutable_root());
+		
+		shared_resources_->add_animation(animation);
 	}
+	
+	if(comp_context.is_clicked_remove_animation) {
+		
+		auto& animations = shared_resources_->get_animations();
+
+		if(!animations.empty()){
+			auto pose_comp = scenes_[current_scene_idx_]->get_mutable_selected_entity()->get_mutable_root()->get_component<anim::PoseComponent>();
+			
+			auto animation = pose_comp->get_animation_component()->get_animation();
+			
+			animations.erase(std::find_if(animations.begin(), animations.end(), [animation](std::shared_ptr<anim::Animation> resourceAnimation){
+				return resourceAnimation.get() == animation;
+			}));
+			
+			
+			pose_comp->get_animation_component()->set_animation(nullptr);
+			
+			comp_context.current_animation_idx = -1;
+			comp_context.is_changed_animation = true;
+		}
+		
+
+	}
+
 }
 //
 //void App::process_python_context()

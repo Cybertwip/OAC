@@ -36,11 +36,13 @@ void AnimationComponent::reload()
 
 void AnimationComponent::set_animation(Animation *animation)
 {
+	animation_ = animation;
+	
 	if (!animation)
 	{
 		return;
 	}
-	animation_ = animation;
+
 	init_animation();
 }
 

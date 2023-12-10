@@ -39,7 +39,7 @@ namespace anim
         void set_ubo_view(const glm::mat4 &view);
         void set_dt(float dt);
         std::shared_ptr<Entity> &get_mutable_entities();
-        const std::vector<std::shared_ptr<Animation>> &get_animations() const;
+        std::vector<std::shared_ptr<Animation>> &get_animations();
         Animation *get_mutable_animation(int id);
 
         Entity *get_entity(int id);

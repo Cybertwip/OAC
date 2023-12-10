@@ -13,6 +13,7 @@ struct ComponentContext
 	int new_animation_idx{-1};
 	bool is_changed_animation{false};
 	bool is_clicked_retargeting{false};
+	bool is_clicked_remove_animation{false};
 	bool is_add_animation_track{false};
 	ComponentContext()
 	: current_animation_idx(-1),

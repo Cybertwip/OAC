@@ -190,7 +190,7 @@ std::shared_ptr<Entity> &SharedResources::get_mutable_entities()
 {
 	return root_entity_;
 }
-const std::vector<std::shared_ptr<Animation>> &SharedResources::get_animations() const
+std::vector<std::shared_ptr<Animation>> &SharedResources::get_animations()
 {
 	return animations_;
 }

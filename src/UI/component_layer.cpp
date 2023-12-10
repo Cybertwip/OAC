@@ -53,12 +53,16 @@ namespace ui
         ImGui::End();
     }
 
-    void ComponentLayer::draw_animation(ComponentContext &context, const SharedResources *shared_resource, Entity *entity, const AnimationComponent *animation)
+    void ComponentLayer::draw_animation(ComponentContext &context, SharedResources *shared_resource, Entity *entity, const AnimationComponent *animation)
     {
-        context.current_animation_idx = animation->get_animation()->get_id();
+		if(animation->get_animation() != nullptr){
+			context.current_animation_idx = animation->get_animation()->get_id();
+		} else {
+			context.current_animation_idx = -1;
+		}
         int animation_idx = context.current_animation_idx;
 
-        const auto &resourceAnimations = shared_resource->get_animations();
+        auto &resourceAnimations = shared_resource->get_animations();
 		
 		std::vector<std::shared_ptr<Animation>> animations;
 		
@@ -78,14 +82,14 @@ namespace ui
         ImGui::PushID("##VerticalScrolling");
         for (int i = 0; i < 1; i++)
         {
-            const ImGuiWindowFlags child_flags = ImGuiWindowFlags_MenuBar;
+            const ImGuiWindowFlags child_flags = 0;
             const ImGuiID child_id = ImGui::GetID((void *)(intptr_t)i);
             const bool child_is_visible = ImGui::BeginChild(child_id, ImVec2(child_w, 200.0f), true, child_flags);
-            if (ImGui::BeginMenuBar())
-            {
-                ImGui::TextUnformatted(names[i]);
-                ImGui::EndMenuBar();
-            }
+//            if (ImGui::BeginMenuBar())
+//            {
+//                ImGui::TextUnformatted(names[i]);
+//                ImGui::EndMenuBar();
+//            }
             if (child_is_visible)
             {
                 for (int idx = 0; idx < animations.size(); idx++)
@@ -107,9 +111,15 @@ namespace ui
 
             ImGui::EndChild();
         }
-        if(ImGui::Button("Duplicate")) {
+        if(ImGui::Button("+")) {
             context.is_clicked_retargeting = true;
         }
+		
+		ImGui::SameLine();
+		if(ImGui::Button("-")) {
+			context.is_clicked_remove_animation = true;
+		}
+
         auto animc = const_cast<AnimationComponent *>(animation);
         auto anim = animc->get_mutable_animation();
 //        ImGui::Text("duration: %f", anim->get_duration());
@@ -120,7 +130,7 @@ namespace ui
             context.new_animation_idx = animation_idx;
             context.is_changed_animation = true;
         }
-        ImGui::DragFloat("custom fps", &fps, 1.0f, 1.0f, 144.0f);
+//        ImGui::DragFloat("custom fps", &fps, 1.0f, 1.0f, 144.0f);
         ImGui::PopID();
     }
 
