@@ -24,120 +24,6 @@
 #include <iostream>
 
 
-namespace {
-
-static const char* SequencerItemTypeNames[] = { "Animation" };
-
-
-struct TracksSequencer : public ImSequencer::SequenceInterface
-{
-	// interface with sequencer
-	
-	virtual int GetFrameMin() const {
-		return 0;
-//		return mFrameMin;
-	}
-	virtual int GetFrameMax() const {
-		return mFrameMax;
-	}
-	virtual int GetItemCount() const { return (int)mItems.size(); }
-	
-	virtual int GetItemTypeCount() const { return sizeof(SequencerItemTypeNames) / sizeof(char*); }
-	virtual const char* GetItemTypeName(int typeIndex) const { return SequencerItemTypeNames[typeIndex]; }
-	virtual const char* GetItemLabel(int index) const
-	{
-		static char tmps[512];
-		snprintf(tmps, 512, "[%02d] %s", index, mItems[index].mName.c_str());
-		return tmps;
-	}
-	
-	virtual void Get(int index, int** start, int** end, int* type, unsigned int* color)
-	{
-		SequenceItem& item = mItems[index];
-		if (color)
-			*color = 0xFFAA8080; // same color for everyone, return color based on type
-		
-		if(item.mFrameStart == item.mFrameEnd){
-			item.mFrameEnd = item.mFrameStart + 1;
-		}
-		
-		if (start)
-			*start = &item.mFrameStart;
-		if (end)
-			*end = &item.mFrameEnd;
-		if (type)
-			*type = item.mType;
-	}
-	virtual void Add(int type) { mItems.push_back(SequenceItem(-1, "", type, 0, 10 )); };
-	virtual void Del(int index) { mItems.erase(mItems.begin() + index); }
-	virtual void Duplicate(int index) { mItems.push_back(mItems[index]); }
-	
-	virtual size_t GetCustomHeight(int index) { return 0; }
-	
-	virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
-	{
-		draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
-		
-		int standardSize = mItems[index].mSequenceSize;
-		int extendedSize = mItems[index].mFrameEnd - mItems[index].mFrameStart;
-		if(extendedSize > standardSize){
-			int numberOfFits = static_cast<int>(extendedSize / standardSize);
-
-			
-			for(int fit = 0; fit < numberOfFits; ++fit){
-				
-				int repeatingFactor = fit + 1;
-				
-				float r = standardSize / float(mFrameMax);
-				
-				float x = ImLerp(rc.Min.x, rc.Max.x, r * repeatingFactor + r * mItems[index].mFrameStart / float(mItems[index].mFrameTotal));
-								
-				draw_list->AddLine(ImVec2(x, rc.Min.y + 6), ImVec2(x, rc.Max.y - 4), 0xAA000000, 4.f);
-			}
-
-		}
-		
-		draw_list->PopClipRect();
-	}
-	
-	TracksSequencer() : 
-//	mFrameMin(0),
-	mFrameMax(0) {
-		
-//		mFrameMin = 0;
-		mFrameMax = 1200;
-
-	}
-//	int mFrameMin;
-	int mFrameMax;
-	struct SequenceItem
-	{
-		SequenceItem(int id, const std::string& name, int type, int frameStart, int frameTotal){
-			mId = id;
-			mName = name;
-			mType = type;
-			mFrameStart = frameStart;
-			mFrameTotal = frameTotal;
-			
-			mFrameEnd = mFrameTotal;
-			mSequenceSize = mFrameTotal - mFrameStart;
-		}
-		
-		int mId;
-		std::string mName;
-		int mType;
-		int mFrameStart, mSequenceSize, mFrameTotal, mFrameEnd;
-	};
-	std::vector<SequenceItem> mItems;
-	
-};
-
-
-static TracksSequencer g_tracksSequencer;
-
-}
-
-
 using namespace anim;
 
 namespace ui
@@ -150,13 +36,7 @@ namespace ui
 	}
 
 	void TimelineLayer::init(Scene *scene){
-		resources_ = scene->get_mutable_shared_resources().get();
-
-		const auto &animations = resources_->get_animations();
 		
-		if(!animations.empty()){
-			g_tracksSequencer.mItems.push_back(TracksSequencer::SequenceItem(animations[0]->get_id(), animations[0]->get_name(), 0, 0, animations[0]->get_duration()));
-		}
 	}
 
     void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
@@ -164,6 +44,8 @@ namespace ui
         init_context(ui_context, scene);
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize;
 		
+		TracksSequencer& g_tracksSequencer = root_entity_->get_tracks_sequencer();
+
 		if(ui_context.component.is_add_animation_track){
 			ui_context.component.is_add_animation_track = false;
 			

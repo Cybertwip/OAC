@@ -73,7 +73,7 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 	std::filesystem::path p = std::filesystem::u8path(path_.c_str());
 	std::string anim_name = p.filename().string();
 	unsigned int size = name_bone_map_.size();
-
+	
 	auto nodes = document->getAllObjects();
 	
 	auto condition = [](const sfbx::ObjectPtr& nodePtr) {
@@ -83,8 +83,8 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 	std::vector<sfbx::ObjectPtr> limbs;
 	
 	std::copy_if(nodes.begin(), nodes.end(), std::back_inserter(limbs), condition);
-
-
+	
+	
 	float duration = 0.0f;
 	for (auto &name_bone : name_bone_map_)
 	{
@@ -93,13 +93,13 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 		});
 		
 		LOG("Found node: " + name_bone.first + " : " + std::to_string(limb != limbs.end()));
-
+		
 		if (limb != limbs.end())
 		{
 			if(sfbx::as<sfbx::Model>(*limb)){
 				sfbx::as<sfbx::Model>(*limb)->setPreRotation(sfbx::float3{ 0, 0, 0 });
 			}
-
+			
 			auto positionCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Position, *limb);
 			
 			auto rotationCurveNode = animationLayer->createCurveNode(sfbx::AnimationKind::Rotation, *limb);
@@ -120,18 +120,18 @@ void Animation::get_fbx_animation(std::shared_ptr<sfbx::Document> document, sfbx
 		return nodePtr->getName().compare(rootNodeName) == 0;
 	};
 	
-//
-//	ai_anim->mTicksPerSecond = static_cast<double>(floorf(fps_ * factor));
-//	ai_anim->mName = aiString(anim_name);
-//	ai_anim->mDuration = static_cast<double>(duration + 1.0);
-//	LOG("duration:" + std::to_string(duration));
-//	
-//	ai_anim->mNumChannels = channels.size();
-//	ai_anim->mChannels = new aiNodeAnim *[channels.size()];
-//	for (int i = 0; i < ai_anim->mNumChannels; i++)
-//	{
-//		ai_anim->mChannels[i] = channels[i];
-//	}
+	//
+	//	ai_anim->mTicksPerSecond = static_cast<double>(floorf(fps_ * factor));
+	//	ai_anim->mName = aiString(anim_name);
+	//	ai_anim->mDuration = static_cast<double>(duration + 1.0);
+	//	LOG("duration:" + std::to_string(duration));
+	//
+	//	ai_anim->mNumChannels = channels.size();
+	//	ai_anim->mChannels = new aiNodeAnim *[channels.size()];
+	//	for (int i = 0; i < ai_anim->mNumChannels; i++)
+	//	{
+	//		ai_anim->mChannels[i] = channels[i];
+	//	}
 }
 void Animation::set_id(int id)
 {
@@ -156,6 +156,7 @@ void Animation::add_and_replace_bone(const std::string &name, const glm::mat4 &t
 		bone = name_bone_map_[name].get();
 		bone->set_name(name);
 		bone->set_bindpose(name_bindpose_map_[name]);
+		bone->replace_or_add_keyframe(transform, 0);
 		bone->replace_or_add_keyframe(transform, time);
 	}
 }
@@ -187,5 +188,14 @@ void Animation::set_root_bone_name(const std::string& root_bone_name)
 {
 	root_bone_name_ = root_bone_name;
 }
+
+void Animation::set_owner(Entity* owner)
+{
+	owner_ = owner;
 }
+Entity* Animation::get_owner() const {
+	return owner_;
+}
+}
+
 

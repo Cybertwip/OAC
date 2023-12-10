@@ -128,18 +128,25 @@ void MainScene::picking(int x, int y, bool is_bone_picking_mode)
 
     anim::LOG(std::to_string(pixel_i) + ": " + std::to_string(pixel_x) + " " + std::to_string(pixel_y));
     int pick_id = pixel_x;
-    if (pick_id == 0x00000000)
-    {
-        anim::LOG("- - pick: background");
-        set_selected_entity(nullptr);
-    }
-    else
+//    if (pick_id == 0x00000000)
+//    {
+//        anim::LOG("- - pick: background");
+//    }
+//    else
     {
         auto entity = resources_->get_entity(pick_id);
+		
+		if(entity){
+			if(entity->get_mutable_root() == entity){
+				entity->set_is_selected(false);
+				entity = nullptr;
+			}
+		}
+		
         if (entity)
         {
             anim::LOG("pick entity");
-            set_selected_entity(entity->get_mutable_root());
+			set_selected_entity(entity->get_mutable_root());
             if (is_bone_picking_mode)
             {
                 if (pixel_y == 255)
@@ -156,14 +163,15 @@ void MainScene::picking(int x, int y, bool is_bone_picking_mode)
                     anim::LOG("pick bone: " + selected_entity_->get_name() + " " + std::to_string(selected_entity_->get_component<anim::ArmatureComponent>()->get_id()));
                 }
             } else {
-				if (selected_entity_)
+				if (entity)
 				{
 					anim::LOG("entity: " + selected_entity_->get_name());
-					
-					selected_entity_->set_is_selected(true);
-					
-					set_selected_entity(selected_entity_);
+
+					set_selected_entity(entity);
+
 				}
+				
+
 			}
         }
     }

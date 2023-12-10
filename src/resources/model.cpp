@@ -138,7 +138,13 @@ namespace anim
 			
 			for (int i = 0; i < vertexIndices.size(); i++) {
 				int index;
-				int uv_index = uvLayer.indices[i];
+				
+				int uv_index = i;
+				if(!uvLayer.indices.empty()){
+					// index based
+					uv_index = uvLayer.indices[i];
+				}
+				
 				index = vertexIndices[i];
 
 				if(layerIndex == 0){

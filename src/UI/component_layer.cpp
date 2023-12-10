@@ -53,12 +53,22 @@ namespace ui
         ImGui::End();
     }
 
-    void ComponentLayer::draw_animation(ComponentContext &context, const SharedResources *shared_resource, const Entity *entity, const AnimationComponent *animation)
+    void ComponentLayer::draw_animation(ComponentContext &context, const SharedResources *shared_resource, Entity *entity, const AnimationComponent *animation)
     {
         context.current_animation_idx = animation->get_animation()->get_id();
         int animation_idx = context.current_animation_idx;
 
-        const auto &animations = shared_resource->get_animations();
+        const auto &resourceAnimations = shared_resource->get_animations();
+		
+		std::vector<std::shared_ptr<Animation>> animations;
+		
+		for(auto& resourceAnimation : resourceAnimations){
+			if(resourceAnimation->get_owner() == entity->get_mutable_root()){
+				animations.push_back(resourceAnimation);
+			}
+		}
+		
+		
         const char *names[] = {"Animation"};
         ImGuiStyle &style = ImGui::GetStyle();
 
@@ -133,15 +143,6 @@ namespace ui
         DragPropertyXYZ("Translation", transform.mTranslation);
         DragPropertyXYZ("Rotation", transform.mRotation);
         DragPropertyXYZ("Scale", transform.mScale);
-		
-		if(transform.get_mat4() != entity->get_local()){
-			entity->set_local(transform.get_mat4());
-			
-			if(auto component = entity->get_mutable_root()-> get_component<PoseComponent>(); component){
-				component->add_and_replace_bone(entity->get_name(), entity->get_local());
-			}
-
-		}
     }
     void ComponentLayer::draw_transform_reset_button(anim::TransformComponent &transform)
     {

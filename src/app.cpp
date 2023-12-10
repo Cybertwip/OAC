@@ -19,6 +19,8 @@
 #include "event/event_history.h"
 #include "resources/exporter.h"
 
+#include "ImGuizmo.h"
+
 //#include "cpython/py_manager.h"
 //#include <pybind11/embed.h>
 
@@ -273,7 +275,7 @@ void App::process_scene_context()
 	auto &ui_context = ui_->get_context();
 	auto &scene_context = ui_context.scene;
 	is_dialog_open_ = ui_context.menu.is_dialog_open;
-	if (scene_context.is_picking && !is_dialog_open_)
+	if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && scene_context.is_picking && !is_dialog_open_ && scene_context.x != -1 && scene_context.y != -1 && !ImGuizmo::IsUsing())
 	{
 		scenes_[current_scene_idx_]->picking(scene_context.x, scene_context.y, scene_context.is_bone_picking_mode);
 	}

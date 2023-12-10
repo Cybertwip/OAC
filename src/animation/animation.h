@@ -19,6 +19,7 @@ namespace anim
 {
 
 class PoseComponent;
+class Entity;
 enum AnimationType
 {
 	None,
@@ -54,6 +55,9 @@ public:
 	void set_root_bone_name(const std::string& root_bone_name);
 	const std::string& get_root_bone_name() const;
 
+	void set_owner(Entity* owner);
+	Entity* get_owner() const;
+	
 protected:
 	float duration_{0.0f};
 	int fps_{0};
@@ -65,6 +69,8 @@ protected:
 	int id_{-1};
 	
 	std::string root_bone_name_;
+	
+	Entity* owner_;
 
 };
 

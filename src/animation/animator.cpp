@@ -40,10 +40,6 @@ void Animator::update_animation(AnimationComponent *animation, Entity *root, Sha
 {
 	assert(animation && root && shader);
 	
-	if(animation->get_animation_stack().empty()){
-		return;
-	}
-	
 	factor_ = animation->get_ticks_per_second_factor();
 	calculate_bone_transform(root, animation->get_animation_stack(), glm::mat4(1.0f));
 	

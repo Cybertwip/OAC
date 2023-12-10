@@ -280,6 +280,8 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 			if (animations_.size() > 0)
 			{
 				animation->set_animation(animations_.back().get());
+				
+				animations_.back()->set_owner(root_entity);
 			}
 			pose = root_entity->add_component<PoseComponent>();
 			LOG("=============== POSE: " + parent_entity->get_name());
@@ -316,7 +318,7 @@ void SharedResources::convert_to_entity(std::shared_ptr<Entity> &entity,
 }
 Entity *SharedResources::get_entity(int id)
 {
-	if (id >= 0 && id < single_entity_list_.size())
+	if (id > 0 && id < single_entity_list_.size())
 	{
 		return single_entity_list_[id].get();
 	}

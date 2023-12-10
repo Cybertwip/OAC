@@ -97,8 +97,8 @@ struct SceneContext
 	: is_picking(false),
 	is_bone_picking_mode(false),
 	is_clicked_picking_mode(false),
-	x(0),
-	y(0)
+	x(-1),
+	y(-1)
 	{
 	}
 };
