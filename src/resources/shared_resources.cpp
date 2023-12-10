@@ -115,8 +115,15 @@ void SharedResources::add_animation(std::shared_ptr<Animation> animation)
 {
 	if (animation)
 	{
-		animations_.push_back(std::move(animation));
-		animations_.back()->set_id(animations_.size() - 1);
+		if(animations_.empty()){
+			animations_.push_back(std::move(animation));
+			animations_.back()->set_id(animations_.size() - 1);
+		} else {
+
+			animation->set_id(animations_.back()->get_id() + 1);
+			animations_.push_back(std::move(animation));
+		}
+
 	}
 }
 void SharedResources::add_shader(const std::string &name, const char *vs_path, const char *fs_path)
@@ -326,11 +333,15 @@ Entity *SharedResources::get_entity(int id)
 }
 Animation *SharedResources::get_mutable_animation(int id)
 {
-	if (id >= animations_.size() || id < 0)
-	{
+	auto it = std::find_if(animations_.begin(), animations_.end(), [id](std::shared_ptr<Animation> pointer){
+		return pointer->get_id() == id;
+	});
+	
+	if(it != animations_.end()){
+		return it->get();
+	} else {
 		return nullptr;
 	}
-	return animations_[id].get();
 }
 }
 

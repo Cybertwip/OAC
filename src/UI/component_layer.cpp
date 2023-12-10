@@ -93,14 +93,14 @@ namespace ui
 //            }
             if (child_is_visible)
             {
-                for (int idx = 0; idx < animations.size(); idx++)
+                for (auto& animation : animations)
                 {
-                    std::string name = std::to_string(idx) + ":" + animations[idx]->get_name();
+                    std::string name = std::to_string(animation->get_id()) + ":" + animation->get_name();
 
-                    bool is_selected = (animations[idx]->get_id() == animation_idx);
+                    bool is_selected = (animation->get_id() == animation_idx);
                     if (ImGui::Selectable(name.c_str(), is_selected))
                     {
-                        animation_idx = animations[idx]->get_id();
+                        animation_idx = animation->get_id();
                     }
 					
 					if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
