@@ -68,7 +68,6 @@ namespace ui
 			}
 		}
 		
-		
         const char *names[] = {"Animation"};
         ImGuiStyle &style = ImGui::GetStyle();
 
