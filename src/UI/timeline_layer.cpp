@@ -42,6 +42,9 @@ namespace ui
     void TimelineLayer::draw(Scene *scene, UiContext &ui_context)
     {
         init_context(ui_context, scene);
+		
+		ui_context.timeline.end_frame = animator_->get_end_time();
+		
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize;
 		
 		TracksSequencer& g_tracksSequencer = root_entity_->get_tracks_sequencer();
@@ -181,7 +184,9 @@ namespace ui
 				
 				currentFrame = static_cast<int>(animator_->get_current_time());
 				
-				animator_->set_end_time(g_tracksSequencer.mFrameMax);
+				animator_->set_sequencer_end_time(g_tracksSequencer.mFrameMax);
+				
+				animator_->set_mode(AnimatorMode::Sequence);
 				
 				button_size = ImVec2(180.0f, 0.0f);
 
@@ -194,11 +199,24 @@ namespace ui
 
 				ImGui::PushItemWidth(130);
 //				ImGui::InputInt("Frame Min", &g_tracksSequencer.mFrameMin);
-				ImGui::InputInt("Frame ", &currentFrame);
+				
+				
 				ImGui::SameLine(next_pos);
-				ImGui::InputInt("Frame Max", &g_tracksSequencer.mFrameMax);
+				
+				DragIntProperty("Max", g_tracksSequencer.mFrameMax, 1.0f, 1, 10000);
+
 				ImGui::PopItemWidth();
-				Sequencer(&g_tracksSequencer, &currentFrame, &expanded, &selectedEntry, &firstFrame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+				
+				int sequencerPick = currentFrame;
+				
+				currentFrame = animator_->get_current_time();
+				
+				Sequencer(&g_tracksSequencer, &sequencerPick, &expanded, &selectedEntry, &firstFrame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+								
+				if(currentFrame != sequencerPick){
+					animator_->set_current_time(sequencerPick);
+				}
+
 				// add a UI to edit that particular item
 				if (selectedEntry != -1)
 				{
@@ -223,10 +241,7 @@ namespace ui
 							if(animation->get_id() == anim_component->get_animation()->get_id()){
 								
 								anim_component->stack_animation(std::make_shared<StackedAnimation>(animation, 0, anim_component->get_mutable_animation()->get_duration()));
-								
-								animator_->set_end_time(static_cast<float>(anim_component->get_mutable_animation()->get_duration()));
-								
-								ui_context.timeline.end_frame = static_cast<int>(animator_->get_end_time());
+														
 								break;
 								}
 						}
@@ -269,19 +284,6 @@ namespace ui
         animator_ = resources_->get_mutable_animator();
         context.fps = animator_->get_fps();
         context.start_frame = static_cast<int>(animator_->get_start_time());
-		
-		if(ui_context.component.current_animation_idx != -1){
-			const auto &animations = resources_->get_animations();
-						
-			for(auto& animation : animations){
-				if(animation->get_id() == ui_context.component.current_animation_idx){
-					
-					context.end_frame = static_cast<int>(animation->get_duration());
-
-					break;
-				}
-			}
-		}
 		
         context.current_frame = static_cast<int>(animator_->get_current_time());
         context.is_recording = is_recording_;
@@ -346,11 +348,16 @@ namespace ui
             next_pos = current_cursor;
         }
         ImGui::SameLine(next_pos);
-        context.is_current_frame_changed = DragIntProperty("Current", context.current_frame, 1.0f, context.start_frame, context.end_frame);
+        context.is_current_frame_changed = DragIntProperty("Frame", context.current_frame, 1.0f, context.start_frame, context.end_frame);
         ImGui::SameLine();
-        DragIntProperty("Start", context.start_frame, 1.0f, 0, context.end_frame - 1);
+//        DragIntProperty("Start", context.start_frame, 1.0f, 0, context.end_frame - 1);
         ImGui::SameLine();
-        DragIntProperty("End", context.end_frame, 1.0f, context.start_frame + 1, 10000);
+        DragIntProperty("Max", context.end_frame, 1.0f, context.start_frame + 1, 10000);
+		
+		animator_->set_end_time(context.end_frame);
+		
+		animator_->set_mode(AnimatorMode::Animation);
+
         ImGui::PopItemWidth();
     }
 

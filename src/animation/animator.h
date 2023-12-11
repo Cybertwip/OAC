@@ -15,6 +15,11 @@ class StackedAnimation;
 class Entity;
 class AnimationComponent;
 
+enum class AnimatorMode {
+	Sequence,
+	Animation
+};
+
 class Animator
 {
 public:
@@ -37,6 +42,8 @@ public:
 	void set_fps(float fps);
 	void set_direction(bool is_left);
 	void set_is_stop(bool is_stop);
+	void set_sequencer_end_time(float time);
+	void set_mode(AnimatorMode mode);
 	
 	bool mIsRootMotion{false};
 	
@@ -45,10 +52,13 @@ private:
 	float current_time_{0.0f};
 	float start_time_{0.0f};
 	float end_time_{300.0f};
+	float sequencer_end_time_{300.0f};
 	float factor_{1.0f};
 	float fps_{60.0f};
 	float direction_{1.0f};
 	std::vector<glm::mat4> final_bone_matrices_;
+	
+	AnimatorMode mode_ = AnimatorMode::Sequence;
 };
 }
 #endif

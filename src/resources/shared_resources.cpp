@@ -93,6 +93,12 @@ void SharedResources::add_entity(std::shared_ptr<Model> &model, const char *path
 		
 		animator_->update_standard_animation( entity.get(), pose->get_shader());
 		
+		animator_->set_end_time(animations_.back()->get_duration());
+		
+		auto &g_tracksSequencer = entity->get_tracks_sequencer();
+		
+		g_tracksSequencer.mFrameMax = animator_->get_end_time();
+		
 	}
 	if (entity)
 	{
@@ -110,8 +116,6 @@ void SharedResources::add_entity(std::shared_ptr<Model> &model, const char *path
 
 		entity->set_local(transformation);
 	}
-	
-	
 }
 void SharedResources::add_animations(const std::vector<std::shared_ptr<Animation>> &animations)
 {

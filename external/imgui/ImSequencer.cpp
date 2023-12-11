@@ -26,7 +26,9 @@
 #include "ImSequencer.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+
 #include <cstdlib>
+#include <string>
 
 namespace ImSequencer
 {
@@ -57,7 +59,7 @@ namespace ImSequencer
       int cx = (int)(io.MousePos.x);
       int cy = (int)(io.MousePos.y);
       static float framePixelWidth = 10.f;
-      static float framePixelWidthTarget = 1.f;
+      static float framePixelWidthTarget = 10.0f;
       int legendWidth = 200;
 
       static int movingEntry = -1;
@@ -480,6 +482,15 @@ namespace ImSequencer
          for (auto& customDraw : compactCustomDraws)
             sequence->CustomDrawCompact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);
 
+		  ImRect rectFrame(ImVec2(contentMin.x, canvas_pos.y + 2)
+						  , ImVec2(contentMin.x + 30, canvas_pos.y + ItemHeight - 2));
+		  unsigned int frameColor = 0xFFFFFFFF;
+		  
+		  std::string frameIndex = "Frame: " + std::to_string(*currentFrame);
+		  
+		  draw_list->AddText(rectFrame.Min, frameColor, frameIndex.c_str());
+
+		  
          // copy paste
          if (sequenceOptions & SEQUENCER_COPYPASTE)
          {
@@ -558,9 +569,9 @@ namespace ImSequencer
                   framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
                   int newVisibleFrameCount = int((canvas_size.x - legendWidth) / framePixelWidthTarget);
                   int lastFrame = *firstFrame + newVisibleFrameCount;
-                  if (lastFrame > sequence->GetFrameMax())
+                  if (lastFrame > sequence->GetFrameMax() + 1)
                   {
-                     framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(sequence->GetFrameMax() - *firstFrame);
+                     framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(sequence->GetFrameMax() + 1 - *firstFrame);
                   }
                }
             }
@@ -609,6 +620,16 @@ namespace ImSequencer
                }
                else
                {
+				   float barNewWidth = ImMax(barWidthInPixels, MinBarWidth);
+				   float barRatio = barNewWidth / barWidthInPixels;
+				   framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
+				   int newVisibleFrameCount = int((canvas_size.x - legendWidth) / framePixelWidthTarget);
+				   int lastFrame = *firstFrame + newVisibleFrameCount;
+				   if (lastFrame > sequence->GetFrameMax() + 1)
+				   {
+					   framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(sequence->GetFrameMax() + 1 - *firstFrame);
+				   }
+				   
                   if (scrollBarThumb.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && firstFrame && !MovingCurrentFrame && movingEntry == -1)
                   {
                      MovingScrollBar = true;

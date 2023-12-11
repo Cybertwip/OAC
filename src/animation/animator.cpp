@@ -25,10 +25,17 @@ Animator::Animator()
 
 void Animator::update(float dt)
 {
+	
+	float end_time = end_time_;
+	
+	if(mode_ == AnimatorMode::Sequence){
+		end_time = sequencer_end_time_;
+	}
+	
 	if (!is_stop_)
 	{
 		current_time_ += fps_ * dt * direction_;
-		current_time_ = fmax(start_time_, fmod(end_time_ + current_time_, end_time_));
+		current_time_ = fmax(start_time_, fmod(end_time + current_time_, end_time));
 	}
 	else
 	{
@@ -410,6 +417,13 @@ void Animator::set_start_time(float time)
 void Animator::set_end_time(float time)
 {
 	end_time_ = time;
+}
+void Animator::set_sequencer_end_time(float time)
+{
+	sequencer_end_time_ = time;
+}
+void Animator::set_mode(AnimatorMode mode){
+	mode_ = mode;
 }
 void Animator::set_fps(float fps)
 {
