@@ -569,10 +569,6 @@ namespace ImSequencer
                   framePixelWidthTarget = framePixelWidth = framePixelWidth / barRatio;
                   int newVisibleFrameCount = int((canvas_size.x - legendWidth) / framePixelWidthTarget);
                   int lastFrame = *firstFrame + newVisibleFrameCount;
-                  if (lastFrame > sequence->GetFrameMax() + 1)
-                  {
-                     framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(sequence->GetFrameMax() + 1 - *firstFrame);
-                  }
                }
             }
             else if (sizingLBar)
@@ -627,7 +623,7 @@ namespace ImSequencer
 				   int lastFrame = *firstFrame + newVisibleFrameCount;
 				   if (lastFrame > sequence->GetFrameMax() + 1)
 				   {
-					   framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth) / float(sequence->GetFrameMax() + 1 - *firstFrame);
+					   framePixelWidthTarget = framePixelWidth = (canvas_size.x - legendWidth + 4.5f) / float(sequence->GetFrameMax() + 1 - *firstFrame);
 				   }
 				   
                   if (scrollBarThumb.Contains(io.MousePos) && ImGui::IsMouseClicked(0) && firstFrame && !MovingCurrentFrame && movingEntry == -1)
