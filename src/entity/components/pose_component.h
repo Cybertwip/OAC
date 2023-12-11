@@ -24,6 +24,7 @@ namespace anim
         void set_animator(Animator *animator);
         void set_animation_component(AnimationComponent *animation_component);
         void set_shader(Shader *shader);
+		Shader* get_shader();
         void set_armature_root(Entity *armature_root);
 
         void add_bone(const std::string &name, BoneInfo info);

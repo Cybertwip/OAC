@@ -86,6 +86,14 @@ void SharedResources::add_entity(std::shared_ptr<Model> &model, const char *path
 	std::shared_ptr<Entity> entity = nullptr;
 	convert_to_entity(entity, model, model->get_root_node(), nullptr, 0, nullptr);
 	
+	
+	if(entity && animations_.size() > 0){
+		auto pose = entity->get_mutable_root()->get_component<PoseComponent>();
+		
+		
+		animator_->update_standard_animation( entity.get(), pose->get_shader());
+		
+	}
 	if (entity)
 	{
 		entity->set_name(model->get_name());
@@ -102,6 +110,8 @@ void SharedResources::add_entity(std::shared_ptr<Model> &model, const char *path
 
 		entity->set_local(transformation);
 	}
+	
+	
 }
 void SharedResources::add_animations(const std::vector<std::shared_ptr<Animation>> &animations)
 {

@@ -65,7 +65,7 @@ void main()
     vec3 mat_diffuse = material.diffuse;
 
     if(material.has_diffuse_texture) {
-        mat_diffuse = texture_color1.rgb * texture_color2.rgb;
+        mat_diffuse = (material.diffuse + texture_color1.rgb + texture_color2.rgb) / 3;
     }
 
     vec3 viewPos =  vec3(inverse(view) * vec4(0.0, 0.0, 0.0, 1.0));

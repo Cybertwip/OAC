@@ -36,10 +36,27 @@ void Animator::update(float dt)
 	}
 }
 
+
+void Animator::update_standard_animation(Entity *root, Shader *shader)
+{
+	assert(root && shader);
+	
+	factor_ = 1;
+	
+	calculate_standard_bone_transform(root, root->get_local());
+
+		
+	shader->use();
+	for (int i = 0; i < MAX_BONE_NUM; ++i)
+	{
+		shader->set_mat4("finalBonesMatrices[" + std::to_string(i) + "]", final_bone_matrices_[i]);
+	}
+}
+
+
 void Animator::update_animation(AnimationComponent *animation, Entity *root, Shader *shader)
 {
 	assert(animation && root && shader);
-	
 	
 	factor_ = animation->get_ticks_per_second_factor();
 	
@@ -54,19 +71,21 @@ void Animator::update_animation(AnimationComponent *animation, Entity *root, Sha
 	{
 		shader->set_mat4("finalBonesMatrices[" + std::to_string(i) + "]", final_bone_matrices_[i]);
 	}
-	
-	
 }
 
 void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_ptr<StackedAnimation>>& animationStack, const glm::mat4 &parentTransform)
 {
 	const std::string &node_name = entity->get_name();
-	auto armature = entity->get_component<ArmatureComponent>();
 	glm::mat4 global_transformation = parentTransform;
 	entity->set_local(glm::mat4(1.0f));
-	
+
 	// 바인딩 포즈
-	global_transformation *= armature->get_bindpose();
+	auto armature = entity->get_component<ArmatureComponent>();
+
+	if(armature){
+		global_transformation *= armature->get_bindpose();
+	}
+	
 	glm::mat4 blendedLocal = glm::identity<glm::mat4>();
 	
 	float previousIntersectionTime = 0;
@@ -167,23 +186,73 @@ void Animator::calculate_bone_transform(Entity *entity, std::vector<std::shared_
 	global_transformation *= entity->get_local();
 
 	// FK
-	int id = armature->get_id();
-	auto &offset = armature->get_bone_offset();
-	if (id < MAX_BONE_NUM)
-	{
-		// 역바인딩변환 행렬과 변환행렬을 곱해줌 (본공간 => 로컬공간)
 	
-		final_bone_matrices_[id] = global_transformation * offset;
+	if(armature){
+		int id = armature->get_id();
+		auto &offset = armature->get_bone_offset();
+		if (id < MAX_BONE_NUM)
+		{
+			// 역바인딩변환 행렬과 변환행렬을 곱해줌 (본공간 => 로컬공간)
+			
+			final_bone_matrices_[id] = global_transformation * offset;
+		}
+		
+		armature->set_model_pose(global_transformation);
 	}
+
 	
 	auto &children = entity->get_mutable_children();
 	size_t size = children.size();
-	armature->set_model_pose(global_transformation);
+	
 	for (size_t i = 0; i < size; i++)
 	{
 		calculate_bone_transform(children[i].get(), animationStack, global_transformation);
 	}
 }
+
+void Animator::calculate_standard_bone_transform(Entity *entity, const glm::mat4 &parentTransform)
+{
+	const std::string &node_name = entity->get_name();
+	glm::mat4 global_transformation = parentTransform;
+	entity->set_local(glm::mat4(1.0f));
+	
+	// 바인딩 포즈
+	auto armature = entity->get_component<ArmatureComponent>();
+	
+	if(armature){
+		global_transformation *= armature->get_bindpose();
+	}
+	
+	glm::mat4 blendedLocal = glm::identity<glm::mat4>();
+	
+	entity->set_local(blendedLocal);
+	
+	global_transformation *= entity->get_local();
+	
+	// FK
+	if(armature){
+		int id = armature->get_id();
+		auto &offset = armature->get_bone_offset();
+		if (id < MAX_BONE_NUM)
+		{
+			// 역바인딩변환 행렬과 변환행렬을 곱해줌 (본공간 => 로컬공간)
+			
+			final_bone_matrices_[id] = global_transformation * offset;
+		}
+		
+		armature->set_model_pose(global_transformation);
+	}
+	
+	
+	auto &children = entity->get_mutable_children();
+	size_t size = children.size();
+	
+	for (size_t i = 0; i < size; i++)
+	{
+		calculate_standard_bone_transform(children[i].get(), global_transformation);
+	}
+}
+
 
 
 void Animator::calculate_mesh_transform(Entity *entity, std::vector<std::shared_ptr<StackedAnimation>>& animationStack, const glm::mat4 &parentTransform)

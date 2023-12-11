@@ -204,6 +204,8 @@ namespace anim
 			if (diffuseMaps.size() > 0)
 			{
 				mat_properties.has_diffuse_texture = true;
+				
+				mat_properties.diffuse = glm::vec3(0.0f);
 			}
 
 
