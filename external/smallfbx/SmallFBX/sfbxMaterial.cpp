@@ -303,7 +303,6 @@ void Material::importFBXObjects()
 		mChildStreams.push_back(std::move(stream));
 	}
 	
-	
 	for(std::size_t i = 0; i<m_child_property_names.size(); ++i){
 		m_textures[m_child_property_names[i]] = sfbx::as<sfbx::Texture>(m_children[i]);
 	}
