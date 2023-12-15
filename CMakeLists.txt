@@ -107,6 +107,9 @@ add_subdirectory(external/glm/)
 message("SmallFBX")
 add_subdirectory(external/smallfbx/)
 
+message("zlib")
+add_subdirectory(external/zlib/)
+
 # message("Python" ${CMAKE_BINARY_DIR}/bin/python/)
 # set(Python3_ROOT_DIR ${CMAKE_BINARY_DIR}/bin/python)
 # set(CMAKE_FIND_ROOT_PATH ${CMAKE_BINARY_DIR})
@@ -126,10 +129,8 @@ add_subdirectory(external/smallfbx/)
 # message(STATUS "Found pybind11 v${pybind11_VERSION}: ${pybind11_INCLUDE_DIRS} ${pybind11_DEFINITIONS} ${pybind11_LIBRARIES}")
 # message("==========================================================")
 
-find_package(zlib REQUIRED)
-
 add_subdirectory(src)
 add_dependencies (imgui glfw)
 add_dependencies(STB_IMAGE imgui)
-target_link_libraries(SmallFBX ${ZLIB_LIBRARIES})
+target_link_libraries(SmallFBX zlib)
 
