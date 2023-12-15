@@ -182,17 +182,18 @@ endif()
 
 message("==========================================================")
 
+# Set the resource files to be included in the bundle
+set(RESOURCE_DIRECTORIES
+    resources
+)
+set(RESOURCE_FILES
+    imgui.ini
+    LICENSE
+)
+
+
 if(APPLE)
-    # Set the resource files to be included in the bundle
-    set(RESOURCE_DIRECTORIES
-        resources
-    )
-    set(RESOURCE_FILES
-        imgui.ini
-        LICENSE
-    )
-
-
+    
     # Copy resource files to the binary directory
     foreach(resource_file ${RESOURCE_DIRECTORIES})
         add_custom_command(TARGET OAC POST_BUILD
@@ -201,7 +202,9 @@ if(APPLE)
     endforeach()
 
     foreach(resource_file ${RESOURCE_FILES})
-        file(COPY ${CMAKE_SOURCE_DIR}/${resource_file} DESTINATION $<TARGET_FILE_DIR:OAC>/../Resources/)
+        add_custom_command(TARGET OAC POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/../Resources/${resource_file})
     endforeach()
 
 
@@ -218,4 +221,18 @@ if(APPLE)
     
     # Set release build type and enable optimizations
     set(CMAKE_BUILD_TYPE Release)
+
+else()
+    foreach(resource_file ${RESOURCE_DIRECTORIES})
+        add_custom_command(TARGET OAC POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/${resource_file})
+    endforeach()
+
+    foreach(resource_file ${RESOURCE_FILES})
+        add_custom_command(TARGET OAC POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/${resource_file} $<TARGET_FILE_DIR:OAC>/${resource_file})
+    endforeach()
+
 endif()
