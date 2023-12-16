@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <list>
+#include <memory>
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>

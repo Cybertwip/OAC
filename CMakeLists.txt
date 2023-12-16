@@ -3,7 +3,6 @@ set(BUILD_SHARED_LIBS OFF)
 cmake_minimum_required(VERSION 3.21)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
-message("Using CMake version ${CMAKE_VERSION}")
 
 project(
   OAC
@@ -17,9 +16,6 @@ set(CMAKE_WARN_DEPRECATED FALSE)
 if (UNIX AND NOT APPLE)
     set(CMAKE_MAKE_PROGRAM /usr/bin/ninja CACHE FILEPATH "")
 endif()
-
-message("CMAKE_RUNTIME_OUTPUT_DIRECTORY : ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-message("CMAKE_BINARY_DIR : ${CMAKE_BINARY_DIR}")
 
 #  for apple ccache
 if(APPLE)
@@ -70,13 +66,6 @@ message("==========================================================")
 #     file(COPY ${CMAKE_CURRENT_LIST_DIR}/python/python3.dll DESTINATION ${CMAKE_BINARY_DIR}/bin)
 #   endif()
 # endif()
-
-message("==========================================================")
-
-message("Compiler")
-message(STATUS " - ID       \t: ${CMAKE_CXX_COMPILER_ID}")
-message(STATUS " - Version  \t: ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS " - Path     \t: ${CMAKE_CXX_COMPILER}")
 
 # for external option
 option(JSONCPP_WITH_TESTS OFF)
