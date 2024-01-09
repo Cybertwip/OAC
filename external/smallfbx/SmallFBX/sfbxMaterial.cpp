@@ -7,8 +7,8 @@
 #include <vector>
 
 namespace {
-	const std::string kEmbeddedToken = "*";
 
+const std::string kEmbeddedToken = "*";
 
 std::string getFileExtension(const std::string& filename) {
 	// Find the last dot in the filename
